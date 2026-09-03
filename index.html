@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>2048 Drop — Falling Block Merge Puzzle</title>
+<meta name="description" content="2048 Drop is a free falling-block puzzle game. Steer numbered blocks with the arrow keys, merge matching pairs, and chain cascades to reach 2048 and beyond. Play free in your browser, no download.">
+<meta name="theme-color" content="#12121a">
+<link rel="canonical" href="https://example.github.io/2048-drop/">
+
+<!-- Open Graph / social -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="2048 Drop — Falling Block Merge Puzzle">
+<meta property="og:description" content="Steer falling numbered blocks, merge matching pairs, chain cascades to 2048. Free browser game.">
+<meta property="og:url" content="https://example.github.io/2048-drop/">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23edc22e'/%3E%3Ctext x='32' y='44' font-family='Helvetica,Arial' font-size='30' font-weight='bold' text-anchor='middle' fill='%23fff'%3E2%3C/text%3E%3C/svg%3E">
+
+<style>
+:root{
+  --bg:#12121a;
+  --panel:#1c1c27;
+  --panel-2:#232331;
+  --grid:#1a1a24;
+  --cellbg:#26263400;
+  --line:#2e2e3d;
+  --text:#eceaf5;
+  --muted:#8f8fa8;
+  --accent:#edc22e;
+  --gap:8px;
+  --cell:min(66px, 15vw, 6.6vh);
+  --radius:10px;
+  --font:"Trebuchet MS", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(1100px 600px at 50% -10%, #22223a 0%, transparent 60%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+  -webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;align-items:center;
+  padding:14px 12px 40px;
+  min-height:100%;
+  overflow-x:hidden;
+}
+
+/* ---------- header ---------- */
+header{width:100%;max-width:1080px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+h1{font-size:clamp(22px,4.4vw,32px);letter-spacing:-0.5px}
+h1 .num{color:var(--accent)}
+header p{color:var(--muted);font-size:13px}
+
+/* ---------- ad slots ---------- */
+.ad{display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ad-top{width:100%;max-width:1080px;min-height:90px;margin-bottom:14px}
+.ad-bottom{width:100%;max-width:1080px;min-height:90px;margin-top:22px}
+.ad-side{width:300px;min-height:250px}
+.ad-ph{
+  width:100%;height:100%;min-height:inherit;
+  border:1px dashed var(--line);border-radius:var(--radius);
+  color:#4d4d63;font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;
+  background:repeating-linear-gradient(45deg,#16161f,#16161f 10px,#191922 10px,#191922 20px);
+}
+
+/* ---------- layout ---------- */
+.layout{
+  width:100%;max-width:1080px;
+  display:flex;gap:22px;align-items:flex-start;justify-content:center;
+}
+.game-col{display:flex;flex-direction:column;align-items:center;gap:12px}
+
+/* ---------- HUD ---------- */
+.hud{display:flex;gap:8px;align-items:stretch;width:100%}
+.stat{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:7px 12px;min-width:76px;flex:1;text-align:center;
+}
+.stat .label{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
+.stat .value{font-size:20px;font-weight:bold;font-variant-numeric:tabular-nums;line-height:1.2}
+.next{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:7px 10px}
+.next .label{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
+.chip{width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:15px}
+
+/* ---------- board ---------- */
+.board-wrap{position:relative;padding:var(--gap);background:var(--grid);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+#board{
+  position:relative;
+  width:calc(5 * var(--cell) + 4 * var(--gap));
+  height:calc(10 * var(--cell) + 9 * var(--gap));
+  touch-action:none;
+}
+.slot{
+  position:absolute;width:var(--cell);height:var(--cell);border-radius:8px;
+  background:rgba(255,255,255,.035);
+  transform:translate(calc(var(--c) * (var(--cell) + var(--gap))), calc(var(--r) * (var(--cell) + var(--gap))));
+}
+.tile{
+  position:absolute;width:var(--cell);height:var(--cell);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:bold;font-variant-numeric:tabular-nums;
+  color:#776e65;background:#eee4da;
+  transform:translate(calc(var(--c) * (var(--cell) + var(--gap))), calc(var(--r) * (var(--cell) + var(--gap))));
+  transition:transform 95ms linear;
+  will-change:transform;
+  font-size:calc(var(--cell) * 0.42);
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);
+}
+.tile.d4{font-size:calc(var(--cell) * 0.30)}
+.tile.d5{font-size:calc(var(--cell) * 0.24)}
+.tile.active{box-shadow:inset 0 -3px 0 rgba(0,0,0,.12), 0 0 0 2px rgba(255,255,255,.35), 0 6px 18px rgba(0,0,0,.5)}
+.tile.pop{animation:pop 200ms ease-out}
+.tile.absorb{opacity:.85}
+@keyframes pop{0%{transform:translate(calc(var(--c) * (var(--cell) + var(--gap))), calc(var(--r) * (var(--cell) + var(--gap)))) scale(1)}
+50%{transform:translate(calc(var(--c) * (var(--cell) + var(--gap))), calc(var(--r) * (var(--cell) + var(--gap)))) scale(1.18)}
+100%{transform:translate(calc(var(--c) * (var(--cell) + var(--gap))), calc(var(--r) * (var(--cell) + var(--gap)))) scale(1)}}
+
+/* tile colours (classic 2048 ramp) */
+.v2{background:#eee4da;color:#776e65}
+.v4{background:#ede0c8;color:#776e65}
+.v8{background:#f2b179;color:#fff}
+.v16{background:#f59563;color:#fff}
+.v32{background:#f67c5f;color:#fff}
+.v64{background:#f65e3b;color:#fff}
+.v128{background:#edcf72;color:#fff}
+.v256{background:#edcc61;color:#fff}
+.v512{background:#edc850;color:#fff}
+.v1024{background:#edc53f;color:#fff}
+.v2048{background:#edc22e;color:#fff;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12),0 0 22px rgba(237,194,46,.6)}
+.vbig{background:linear-gradient(150deg,#7b5cf0,#4a2fd6);color:#fff;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2),0 0 22px rgba(123,92,240,.55)}
+
+/* ---------- floating chain toast ---------- */
+#toast{
+  position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);
+  font-size:clamp(18px,4vw,26px);font-weight:bold;color:#fff;
+  text-shadow:0 3px 14px rgba(0,0,0,.8);pointer-events:none;opacity:0;
+}
+#toast.show{animation:rise 800ms ease-out}
+@keyframes rise{0%{opacity:0;transform:translate(-50%,-30%) scale(.8)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-110%) scale(1.05)}}
+
+/* ---------- overlay ---------- */
+.overlay{
+  position:absolute;inset:0;border-radius:14px;
+  background:rgba(12,12,20,.9);backdrop-filter:blur(3px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  text-align:center;padding:22px;z-index:5;
+}
+.overlay[hidden]{display:none}
+.overlay h2{font-size:clamp(22px,5vw,30px)}
+.overlay p{color:var(--muted);font-size:14px;max-width:260px;line-height:1.5}
+button.btn{
+  background:var(--accent);color:#2a2410;border:0;border-radius:9px;
+  padding:11px 24px;font-size:15px;font-weight:bold;font-family:var(--font);cursor:pointer;
+  transition:filter 120ms, transform 80ms;
+}
+button.btn:hover{filter:brightness(1.08)}
+button.btn:active{transform:translateY(1px)}
+button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:normal}
+
+/* ---------- controls / info ---------- */
+.bar{display:flex;gap:8px;width:100%}
+.bar button{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:9px;font-family:var(--font);font-size:13px;cursor:pointer}
+.bar button:hover{color:var(--text);border-color:#3d3d52}
+.keys{color:var(--muted);font-size:12.5px;text-align:center;line-height:1.9;max-width:340px}
+kbd{background:var(--panel-2);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;font-family:var(--font);font-size:12px;color:var(--text)}
+
+/* ---------- article (SEO + AdSense content requirement) ---------- */
+article{max-width:1080px;width:100%;margin-top:30px;color:var(--muted);font-size:14.5px;line-height:1.7}
+article h2{color:var(--text);font-size:19px;margin:22px 0 8px}
+article ul{margin:0 0 0 20px}
+article li{margin-bottom:5px}
+footer{max-width:1080px;width:100%;margin-top:26px;padding-top:16px;border-top:1px solid var(--line);color:#5c5c73;font-size:12.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+@media (max-width:900px){
+  .ad-side{display:none}
+  .layout{flex-direction:column;align-items:center}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>2048&nbsp;<span class="num">Drop</span></h1>
+  <p>Falling blocks. Matching numbers merge. How far can you climb?</p>
+</header>
+
+<!-- ============ AD SLOT: top leaderboard ============ -->
+<div class="ad ad-top" id="ad-top"></div>
+
+<main class="layout">
+  <div class="game-col">
+
+    <div class="hud">
+      <div class="stat"><div class="label">Score</div><div class="value" id="score">0</div></div>
+      <div class="stat"><div class="label">Best</div><div class="value" id="best">0</div></div>
+      <div class="stat"><div class="label">Level</div><div class="value" id="level">1</div></div>
+      <div class="next"><span class="label">Next</span><div class="chip v2" id="next">2</div></div>
+    </div>
+
+    <div class="board-wrap">
+      <div id="board"></div>
+      <div id="toast"></div>
+
+      <div class="overlay" id="overlay-start">
+        <h2>2048 Drop</h2>
+        <p>Steer the falling block with the arrow keys. Land it beside a matching number and they merge.</p>
+        <button class="btn" id="btn-start">Play</button>
+      </div>
+
+      <div class="overlay" id="overlay-over" hidden>
+        <h2 id="over-title">Game Over</h2>
+        <p id="over-text">The stack reached the top.</p>
+        <button class="btn" id="btn-again">Play Again</button>
+      </div>
+
+      <div class="overlay" id="overlay-pause" hidden>
+        <h2>Paused</h2>
+        <button class="btn" id="btn-resume">Resume</button>
+      </div>
+    </div>
+
+    <div class="bar">
+      <button id="btn-pause">Pause</button>
+      <button id="btn-restart">Restart</button>
+      <button id="btn-sound">Sound: On</button>
+    </div>
+
+    <div class="keys">
+      <kbd>←</kbd> <kbd>→</kbd> move &nbsp;·&nbsp; <kbd>↓</kbd> soft drop &nbsp;·&nbsp; <kbd>↑</kbd> / <kbd>Space</kbd> hard drop<br>
+      <kbd>P</kbd> pause &nbsp;·&nbsp; <kbd>R</kbd> restart &nbsp;·&nbsp; on mobile, swipe and tap
+    </div>
+  </div>
+
+  <!-- ============ AD SLOT: sidebar 300x250 ============ -->
+  <aside class="ad ad-side" id="ad-side"></aside>
+</main>
+
+<!-- ============ AD SLOT: bottom ============ -->
+<div class="ad ad-bottom" id="ad-bottom"></div>
+
+<article>
+  <h2>How to play 2048 Drop</h2>
+  <p>A numbered block falls from the top of a five-column well. Use the left and right arrow keys to steer it while it falls, the down arrow to speed it up, and the up arrow or spacebar to slam it straight down. When the block lands next to another block holding the same number — above, below, or to either side — the two fuse into a single block worth double.</p>
+  <p>Every merge collapses the stack, which can push new pairs together and set off a chain reaction. Longer chains are worth more: a merge in the third link of a cascade scores triple. Clearing space is the whole game, because when the well fills to the top it is over.</p>
+
+  <h2>Tips for a higher score</h2>
+  <ul>
+    <li>Keep your largest block in a bottom corner and build a descending staircase toward it.</li>
+    <li>Do not scatter 2s across all five columns — park them next to each other so they collapse on contact.</li>
+    <li>Use the hard drop only when you are certain; a misplaced block in the middle of the well is hard to dig out.</li>
+    <li>Chains beat single merges. Setting up a column so one landing triggers three merges is worth far more than three separate landings.</li>
+    <li>Watch the Next preview. A 4 on deck changes where you want to put the current 2.</li>
+  </ul>
+
+  <h2>About the game</h2>
+  <p>2048 Drop crosses the falling-block puzzle format with the merge maths of 2048. It runs entirely in your browser, works offline once loaded, needs no account or download, and plays on desktop and mobile. Your best score is stored locally on your own device.</p>
+</article>
+
+<footer>
+  <span>&copy; <span id="year"></span> 2048 Drop</span>
+  <span>Made for the web. Free to play.</span>
+</footer>
+
+<script>
+/* =====================================================================
+   AD CONFIGURATION
+   ---------------------------------------------------------------------
+   1. Get approved at https://www.google.com/adsense
+   2. Paste your publisher ID below (looks like 'ca-pub-1234567890123456')
+   3. Create three ad units in AdSense and paste their slot IDs
+   Until 'client' is filled in, dashed placeholders are shown instead.
+   ===================================================================== */
+const ADS = {
+  client: '',                 // e.g. 'ca-pub-1234567890123456'
+  slots: {
+    top:    '',               // e.g. '1234567890'
+    side:   '',
+    bottom: ''
+  },
+  showPlaceholders: true      // set false to hide slots entirely until configured
+};
+
+(function initAds(){
+  const defs = [
+    { el: 'ad-top',    slot: ADS.slots.top,    format: 'horizontal', label: 'Advertisement' },
+    { el: 'ad-side',   slot: ADS.slots.side,   format: 'rectangle',  label: 'Advertisement' },
+    { el: 'ad-bottom', slot: ADS.slots.bottom, format: 'horizontal', label: 'Advertisement' }
+  ];
+  const live = Boolean(ADS.client);
+
+  if (live) {
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + ADS.client;
+    s.crossOrigin = 'anonymous';
+    document.head.appendChild(s);
+  }
+
+  defs.forEach(function(d){
+    const host = document.getElementById(d.el);
+    if (!host) return;
+    if (live && d.slot) {
+      const ins = document.createElement('ins');
+      ins.className = 'adsbygoogle';
+      ins.style.display = 'block';
+      ins.style.width = '100%';
+      ins.setAttribute('data-ad-client', ADS.client);
+      ins.setAttribute('data-ad-slot', d.slot);
+      ins.setAttribute('data-ad-format', d.format);
+      ins.setAttribute('data-full-width-responsive', 'true');
+      host.appendChild(ins);
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } else if (ADS.showPlaceholders) {
+      const ph = document.createElement('div');
+      ph.className = 'ad-ph';
+      ph.textContent = d.label;
+      host.appendChild(ph);
+    } else {
+      host.style.display = 'none';
+    }
+  });
+})();
+
+
+/* =====================================================================
+   GAME
+   ===================================================================== */
+const COLS = 5, ROWS = 10, SPAWN_COL = 2;
+const STEP_MS = 95;          // tile move animation
+const SETTLE_PAUSE = 55;     // breathing room between cascade steps
+
+const boardEl   = document.getElementById('board');
+const scoreEl   = document.getElementById('score');
+const bestEl    = document.getElementById('best');
+const levelEl   = document.getElementById('level');
+const nextEl    = document.getElementById('next');
+const toastEl   = document.getElementById('toast');
+const ovStart   = document.getElementById('overlay-start');
+const ovOver    = document.getElementById('overlay-over');
+const ovPause   = document.getElementById('overlay-pause');
+const overTitle = document.getElementById('over-title');
+const overText  = document.getElementById('over-text');
+
+let grid;                    // grid[r][c] = tile id or 0
+let tiles;                   // Map id -> tile
+let nextId, active, nextVal;
+let score, best, merges, gameOver, paused, busy, running, reached2048;
+let dropAcc = 0, lastFrame = 0, rafId = null;
+let soundOn = true;
+
+/* ---------- tile colour helper ---------- */
+function classFor(v){
+  const known = [2,4,8,16,32,64,128,256,512,1024,2048];
+  return known.indexOf(v) >= 0 ? 'v' + v : 'vbig';
+}
+function digitClass(v){
+  const n = String(v).length;
+  return n >= 5 ? 'd5' : (n === 4 ? 'd4' : '');
+}
+
+/* ---------- board scaffolding ---------- */
+function buildSlots(){
+  for (let r = 0; r < ROWS; r++){
+    for (let c = 0; c < COLS; c++){
+      const s = document.createElement('div');
+      s.className = 'slot';
+      s.style.setProperty('--r', r);
+      s.style.setProperty('--c', c);
+      boardEl.appendChild(s);
+    }
+  }
+}
+
+function place(t){
+  t.el.style.setProperty('--r', t.r);
+  t.el.style.setProperty('--c', t.c);
+}
+
+function paint(t){
+  t.el.className = 'tile ' + classFor(t.v) + ' ' + digitClass(t.v) + (t === active ? ' active' : '');
+  t.el.textContent = t.v;
+}
+
+function makeTile(r, c, v){
+  const el = document.createElement('div');
+  const t = { id: nextId++, r: r, c: c, v: v, el: el };
+  tiles.set(t.id, t);
+  boardEl.appendChild(el);
+  place(t);
+  paint(t);
+  return t;
+}
+
+function removeTile(t){
+  tiles.delete(t.id);
+  if (t.el.parentNode) t.el.parentNode.removeChild(t.el);
+}
+
+function tileAt(r, c){
+  if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return null;
+  const id = grid[r][c];
+  return id ? tiles.get(id) : null;
+}
+
+/* ---------- sound ---------- */
+let audioCtx = null;
+function blip(freq, dur){
+  if (!soundOn) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'triangle';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  } catch (e) { /* audio unavailable — ignore */ }
+}
+
+/* ---------- scoring / speed ---------- */
+function level(){ return 1 + Math.floor(score / 1500); }
+function dropInterval(){ return Math.max(130, 720 - (level() - 1) * 55); }
+
+function updateHud(){
+  scoreEl.textContent = score;
+  bestEl.textContent = best;
+  levelEl.textContent = level();
+  nextEl.className = 'chip ' + classFor(nextVal);
+  nextEl.textContent = nextVal;
+}
+
+function rollValue(){
+  const r = Math.random();
+  if (level() >= 4 && r < 0.04) return 8;
+  if (r < 0.24) return 4;
+  return 2;
+}
+
+/* ---------- movement ---------- */
+function free(r, c){
+  return r >= 0 && r < ROWS && c >= 0 && c < COLS && grid[r][c] === 0;
+}
+
+function moveActive(dc){
+  if (!active || busy || paused || gameOver) return;
+  if (free(active.r, active.c + dc)) {
+    active.c += dc;
+    place(active);
+  }
+}
+
+function softDrop(){
+  if (!active || busy || paused || gameOver) return;
+  if (free(active.r + 1, active.c)) {
+    active.r++;
+    place(active);
+    score += 1;
+    updateHud();
+    dropAcc = 0;
+  } else {
+    lock();
+  }
+}
+
+function hardDrop(){
+  if (!active || busy || paused || gameOver) return;
+  let dist = 0;
+  while (free(active.r + 1, active.c)) { active.r++; dist++; }
+  place(active);
+  score += dist * 2;
+  updateHud();
+  lock();
+}
+
+/* ---------- lock + settle ---------- */
+function lock(){
+  const t = active;
+  active = null;
+  grid[t.r][t.c] = t.id;
+  paint(t);
+  blip(200, 0.06);
+  busy = true;
+  settle().then(function(){
+    busy = false;
+    if (!gameOver) spawn();
+  });
+}
+
+function sleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+
+/* Pull every tile down as far as it will go. Returns true if anything moved. */
+function applyGravity(){
+  let moved = false;
+  for (let c = 0; c < COLS; c++){
+    let write = ROWS - 1;
+    for (let r = ROWS - 1; r >= 0; r--){
+      const id = grid[r][c];
+      if (!id) continue;
+      if (r !== write){
+        grid[write][c] = id;
+        grid[r][c] = 0;
+        const t = tiles.get(id);
+        t.r = write;
+        place(t);
+        moved = true;
+      }
+      write--;
+    }
+  }
+  return moved;
+}
+
+/* Find every non-overlapping adjacent equal pair. Lower tile survives on a
+   vertical match; left tile survives on a horizontal one. */
+function findMerges(){
+  const used = new Set();
+  const pairs = [];
+  for (let r = ROWS - 1; r >= 0; r--){
+    for (let c = 0; c < COLS; c++){
+      const a = tileAt(r, c);
+      if (!a || used.has(a.id)) continue;
+      const below = tileAt(r + 1, c);
+      if (below && !used.has(below.id) && below.v === a.v){
+        pairs.push({ from: a, to: below });
+        used.add(a.id); used.add(below.id);
+        continue;
+      }
+      const right = tileAt(r, c + 1);
+      if (right && !used.has(right.id) && right.v === a.v){
+        pairs.push({ from: right, to: a });
+        used.add(a.id); used.add(right.id);
+      }
+    }
+  }
+  return pairs;
+}
+
+async function settle(){
+  let chain = 0;
+  let guard = 0;
+  while (guard++ < 400){
+    if (applyGravity()){
+      await sleep(STEP_MS);
+      continue;
+    }
+    const pairs = findMerges();
+    if (!pairs.length) break;
+
+    chain++;
+    let chainScore = 0;
+
+    // slide the absorbed tile into its partner
+    pairs.forEach(function(p){
+      grid[p.from.r][p.from.c] = 0;
+      p.from.r = p.to.r;
+      p.from.c = p.to.c;
+      p.from.el.classList.add('absorb');
+      place(p.from);
+    });
+    await sleep(STEP_MS);
+
+    pairs.forEach(function(p){
+      removeTile(p.from);
+      p.to.v *= 2;
+      paint(p.to);
+      p.to.el.classList.add('pop');
+      setTimeout(function(){ p.to.el.classList.remove('pop'); }, 210);
+      chainScore += p.to.v * chain;
+      merges++;
+      if (p.to.v >= 2048 && !reached2048){
+        reached2048 = true;
+        showToast('2048!');
+      }
+    });
+
+    score += chainScore;
+    if (score > best){
+      best = score;
+      try { localStorage.setItem('drop2048.best', String(best)); } catch (e) {}
+    }
+    updateHud();
+    blip(300 + chain * 90, 0.10);
+    if (chain >= 2) showToast('Chain x' + chain + '  +' + chainScore);
+
+    await sleep(SETTLE_PAUSE);
+  }
+}
+
+function showToast(text){
+  toastEl.textContent = text;
+  toastEl.classList.remove('show');
+  void toastEl.offsetWidth;   // restart the animation
+  toastEl.classList.add('show');
+}
+
+/* ---------- spawn / game over ---------- */
+function spawn(){
+  if (grid[0][SPAWN_COL] !== 0){
+    endGame();
+    return;
+  }
+  active = makeTile(0, SPAWN_COL, nextVal);
+  paint(active);
+  nextVal = rollValue();
+  updateHud();
+  dropAcc = 0;
+}
+
+function endGame(){
+  gameOver = true;
+  running = false;
+  overTitle.textContent = reached2048 ? 'Nice run!' : 'Game Over';
+  overText.textContent = 'Final score ' + score + ' · ' + merges + ' merges · level ' + level() + '.';
+  ovOver.hidden = false;
+  blip(120, 0.4);
+}
+
+/* ---------- main loop ---------- */
+function frame(now){
+  rafId = requestAnimationFrame(frame);
+  if (!lastFrame) lastFrame = now;
+  const dt = now - lastFrame;
+  lastFrame = now;
+  if (!running || paused || busy || gameOver || !active) return;
+
+  dropAcc += dt;
+  if (dropAcc >= dropInterval()){
+    dropAcc = 0;
+    if (free(active.r + 1, active.c)){
+      active.r++;
+      place(active);
+    } else {
+      lock();
+    }
+  }
+}
+
+/* ---------- lifecycle ---------- */
+function reset(){
+  grid = [];
+  for (let r = 0; r < ROWS; r++){
+    grid.push(new Array(COLS).fill(0));
+  }
+  tiles = new Map();
+  Array.prototype.slice.call(boardEl.querySelectorAll('.tile')).forEach(function(el){
+    el.parentNode.removeChild(el);
+  });
+  nextId = 1;
+  active = null;
+  score = 0;
+  merges = 0;
+  gameOver = false;
+  paused = false;
+  busy = false;
+  reached2048 = false;
+  dropAcc = 0;
+  lastFrame = 0;
+  nextVal = 2;
+  nextVal = rollValue();
+  updateHud();
+}
+
+function start(){
+  reset();
+  ovStart.hidden = true;
+  ovOver.hidden = true;
+  ovPause.hidden = true;
+  running = true;
+  spawn();
+  if (rafId === null) rafId = requestAnimationFrame(frame);
+}
+
+function togglePause(){
+  if (!running || gameOver) return;
+  paused = !paused;
+  ovPause.hidden = !paused;
+  lastFrame = 0;
+}
+
+/* ---------- input ---------- */
+document.addEventListener('keydown', function(e){
+  const k = e.key;
+  if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].indexOf(k) >= 0) e.preventDefault();
+
+  if (!running && (k === 'Enter' || k === ' ')) { start(); return; }
+  if (gameOver && (k === 'Enter' || k === ' ')) { start(); return; }
+
+  if (k === 'ArrowLeft')  moveActive(-1);
+  else if (k === 'ArrowRight') moveActive(1);
+  else if (k === 'ArrowDown')  softDrop();
+  else if (k === 'ArrowUp' || k === ' ') hardDrop();
+  else if (k === 'p' || k === 'P') togglePause();
+  else if (k === 'r' || k === 'R') start();
+});
+
+/* touch: swipe left/right to move, swipe down to hard drop, tap to soft drop */
+(function touchControls(){
+  let sx = 0, sy = 0, st = 0, movedCols = 0;
+  const THRESH = 26;
+
+  boardEl.addEventListener('touchstart', function(e){
+    const t = e.touches[0];
+    sx = t.clientX; sy = t.clientY; st = Date.now(); movedCols = 0;
+  }, { passive: true });
+
+  boardEl.addEventListener('touchmove', function(e){
+    e.preventDefault();
+    const t = e.touches[0];
+    const dx = t.clientX - sx;
+    const dy = t.clientY - sy;
+    if (Math.abs(dx) > Math.abs(dy)){
+      const steps = Math.trunc(dx / THRESH);
+      while (movedCols < steps) { moveActive(1); movedCols++; }
+      while (movedCols > steps) { moveActive(-1); movedCols--; }
+    }
+  }, { passive: false });
+
+  boardEl.addEventListener('touchend', function(e){
+    const t = e.changedTouches[0];
+    const dx = t.clientX - sx;
+    const dy = t.clientY - sy;
+    const dt = Date.now() - st;
+    if (!running || gameOver) { start(); return; }
+    if (dy > 60 && Math.abs(dy) > Math.abs(dx)) hardDrop();
+    else if (dt < 220 && Math.abs(dx) < 14 && Math.abs(dy) < 14) softDrop();
+  }, { passive: true });
+})();
+
+document.getElementById('btn-start').addEventListener('click', start);
+document.getElementById('btn-again').addEventListener('click', start);
+document.getElementById('btn-resume').addEventListener('click', togglePause);
+document.getElementById('btn-pause').addEventListener('click', togglePause);
+document.getElementById('btn-restart').addEventListener('click', start);
+document.getElementById('btn-sound').addEventListener('click', function(){
+  soundOn = !soundOn;
+  this.textContent = 'Sound: ' + (soundOn ? 'On' : 'Off');
+  try { localStorage.setItem('drop2048.sound', soundOn ? '1' : '0'); } catch (e) {}
+});
+
+/* ---------- boot ---------- */
+document.getElementById('year').textContent = new Date().getFullYear();
+try {
+  best = parseInt(localStorage.getItem('drop2048.best') || '0', 10) || 0;
+  if (localStorage.getItem('drop2048.sound') === '0'){
+    soundOn = false;
+    document.getElementById('btn-sound').textContent = 'Sound: Off';
+  }
+} catch (e) { best = 0; }
+
+buildSlots();
+reset();
+bestEl.textContent = best;
+running = false;
+</script>
+</body>
+</html>
