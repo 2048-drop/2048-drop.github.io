@@ -15,7 +15,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-URL=""; EMAIL=""; PUB=""; HOST=""; RAIL=""; ARTICLE=""; BOTTOM=""; H5=""
+URL=""; EMAIL=""; PUB=""; HOST=""; RAIL=""; ARTICLE=""; BOTTOM=""; H5=""; BUMP=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --url)          URL="${2:-}"; shift 2 ;;
@@ -26,13 +26,14 @@ while [ $# -gt 0 ]; do
     --slot-article) ARTICLE="${2:-}"; shift 2 ;;
     --slot-bottom)  BOTTOM="${2:-}"; shift 2 ;;
     --h5)           H5="1"; shift ;;
+    --bump)         BUMP="1"; shift ;;
     -h|--help)      sed -n '2,16p' "$0"; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 1 ;;
   esac
 done
 
 URL="$URL" EMAIL="$EMAIL" PUB="$PUB" HOST="$HOST" \
-RAIL="$RAIL" ARTICLE="$ARTICLE" BOTTOM="$BOTTOM" H5="$H5" python3 - <<'PY'
+RAIL="$RAIL" ARTICLE="$ARTICLE" BOTTOM="$BOTTOM" H5="$H5" BUMP="$BUMP" python3 - <<'PY'
 import os, re, glob, sys
 
 url     = os.environ['URL'].rstrip('/')
@@ -117,6 +118,23 @@ if pub:
         "google.com, %s, DIRECT, f08c47fec0942fa0\n" % pub.replace('ca-','')
     )
     changed.append('ads.txt')
+
+# ------------------------------------------------------- cache busting
+# GitHub Pages serves assets with cache-control: max-age=600, so a returning
+# visitor can sit on a stale stylesheet for ten minutes after a deploy. Version
+# the asset URLs by content hash: the URL only changes when the file does.
+import hashlib
+ASSETS = ['style.css','game.js','ads.js']
+vers = {a: hashlib.md5(open(a,'rb').read()).hexdigest()[:8] for a in ASSETS}
+for f in PAGES:
+    s = orig = open(f).read()
+    for a, v in vers.items():
+        s = re.sub(r'(href|src)="' + re.escape(a) + r'(\?v=[0-9a-f]+)?"',
+                   lambda m, a=a, v=v: '%s="%s?v=%s"' % (m.group(1), a, v), s)
+    if s != orig:
+        open(f,'w').write(s)
+        if f not in changed: changed.append(f)
+print("asset versions: " + ", ".join("%s?v=%s" % (a, v) for a, v in vers.items()))
 
 # ---------------------------------------------------------------- report
 print("updated: " + (", ".join(sorted(set(changed))) if changed else "nothing (already configured?)"))
