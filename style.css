@@ -290,16 +290,16 @@ nav a.on{color:var(--text);background:var(--panel)}
   transform:translate(calc(var(--c) * (var(--cell) + var(--gap))), calc(var(--r) * (var(--cell) + var(--gap))));
 }
 
-/* landing preview */
-.ghost{
+/* landing preview (named .landing, NOT .ghost - .btn.ghost is a button style) */
+.landing{
   z-index:1;
   position:absolute;width:var(--cell);height:var(--cell);border-radius:9px;
   border:2px dashed var(--line-hi);
   transform:translate(calc(var(--c) * (var(--cell) + var(--gap))), calc(var(--r) * (var(--cell) + var(--gap))));
   transition:transform 95ms ease-out;pointer-events:none;opacity:.65;
 }
-.ghost.hide{opacity:0}
-.ghost.match{border-color:var(--good);background:rgba(74,222,128,.10);opacity:1}
+.landing.hide{opacity:0}
+.landing.match{border-color:var(--good);background:rgba(74,222,128,.10);opacity:1}
 
 .tile{
   z-index:2;
