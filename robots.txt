@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://avalonlover1.github.io/2048-drop/sitemap.xml
+Sitemap: https://2048-drop.github.io/sitemap.xml

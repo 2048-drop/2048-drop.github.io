@@ -45,6 +45,11 @@ changed = []
 
 PAGES = ['index.html','how-to-play.html','about.html','privacy.html','terms.html']
 
+# Whatever base URL the site currently carries, so re-pointing an already
+# configured site to a new domain works, not just the first run.
+m = re.search(r'<link rel="canonical" href="([^"]+?)/?"', open('index.html').read())
+old_base = (m.group(1).rstrip('/') if m else 'https://example.github.io/2048-drop')
+
 if pub and not re.fullmatch(r'ca-pub-\d{16}', pub):
     sys.exit("--pub must look like ca-pub-1234567890123456 (got: %s)" % pub)
 
@@ -53,8 +58,9 @@ for f in PAGES:
     s = orig = open(f).read()
 
     if url:
-        s = s.replace('https://example.github.io/2048-drop/' + f, url + '/' + f)
-        s = s.replace('https://example.github.io/2048-drop/', url + '/')
+        s = s.replace(old_base + '/' + f, url + '/' + f)
+        s = s.replace(old_base + '/', url + '/')
+        s = s.replace(old_base, url)
         s = s.replace('[YOUR SITE URL]', url)
     if email:
         s = s.replace('[YOUR CONTACT EMAIL]', email)
@@ -97,7 +103,7 @@ if s != orig:
 for f in ['robots.txt','sitemap.xml']:
     s = orig = open(f).read()
     if url:
-        s = s.replace('https://example.github.io/2048-drop', url)
+        s = s.replace(old_base, url)
     if s != orig:
         open(f,'w').write(s); changed.append(f)
 
@@ -121,8 +127,13 @@ if leftover:
 else:
     print("no placeholders left in any page.")
 
-if url and 'example.github.io' in "".join(open(f).read() for f in PAGES + ['robots.txt','sitemap.xml']):
-    print("\nWARNING: 'example.github.io' still appears somewhere.")
+if url:
+    stale = [f for f in PAGES + ['robots.txt','sitemap.xml']
+             if url not in open(f).read() or (old_base != url and old_base in open(f).read())]
+    if stale:
+        print("\nWARNING: these files still carry the old URL: " + ", ".join(stale))
+    else:
+        print("all pages, robots.txt and sitemap.xml now point at " + url)
 
 print("\nads.js: client=%s  slots=%s  placeholders=%s  h5GamesAds=%s" % (
     (re.search(r"  client: '([^']*)'", open('ads.js').read()).group(1) or '(unset)'),
