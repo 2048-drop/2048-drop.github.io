@@ -44,7 +44,7 @@ const ADS = {
   h5GamesAds: true,
 
   /* Testing knobs — turn both off in production. */
-  testMode: true,                // adds data-adbreak-test=on
+  testMode: false,                // adds data-adbreak-test=on
   showPlaceholders: true,        // dashed boxes, only while no client is set
   rewardsWithoutAds: false        // no rewarded provider yet? grant the bonus
                                  // outright rather than fake an ad
