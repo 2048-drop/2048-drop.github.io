@@ -86,10 +86,13 @@ for f in PAGES:
         s = re.sub(r'\n<script async src="https://pagead2\.googlesyndication\.com[^>]*></script>', '', s)
         # H5 Games Ads serves test ads only while data-adbreak-test is present.
         test_attr = ' data-adbreak-test="on"' if (h5_on and test_on) else ''
+        # Interstitials need a frequency hint; it is the minimum gap Google
+        # will leave between two ad breaks.
+        freq_attr = ' data-ad-frequency-hint="60s"' if h5_on else ''
         snippet = ('\n<meta name="google-adsense-account" content="%s">'
                    '\n<script async src="https://pagead2.googlesyndication.com/pagead/js/'
-                   'adsbygoogle.js?client=%s"%s crossorigin="anonymous"></script>'
-                   % (pub, pub, test_attr))
+                   'adsbygoogle.js?client=%s"%s%s crossorigin="anonymous"></script>'
+                   % (pub, pub, freq_attr, test_attr))
         s = re.sub(r'(<meta name="theme-color" content="[^"]*">)', lambda m: m.group(1) + snippet, s, count=1)
 
     if s != orig:

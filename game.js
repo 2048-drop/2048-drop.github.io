@@ -99,6 +99,10 @@ let running, paused, busy, over, reached2048, secondChances, refills;
 let mode, daily, rng;
 let dropAcc = 0, lastFrame = 0, rafId = null, startedAt = 0;
 let soundOn = store.get('sound', true);
+let adPlaying = false;                       // silences the game while an ad runs
+let sinceAd = store.get('sinceAd', 0);       // survives reloads, so a refresh
+let rewardedThisGame = false;                // cannot be used to skip the ad
+const GAMES_PER_AD = 3;
 
 /* ---------------------------------------------------------------------
    Tiles
@@ -191,7 +195,7 @@ function toast(text){
 
 let audioCtx = null;
 function blip(freq, dur, type){
-  if (!soundOn) return;
+  if (!soundOn || adPlaying) return;
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -642,6 +646,7 @@ function secondChance(){
     title: 'Second Chance',
     reward: 'a cleared top section so you can keep this run going',
     onReward: function(){
+      rewardedThisGame = true;
       secondChances--;
       const dead = [];
       tiles.forEach(function(t){ if (t.r < 4) dead.push(t); });
@@ -670,11 +675,45 @@ function refillPowers(){
     title: 'Power-up Refill',
     reward: 'one bomb, one wild block and one undo',
     onReward: function(){
+      rewardedThisGame = true;
       refills--;
       grantPower('bomb'); grantPower('wild'); grantPower('undo');
       toast('Powers restored');
       renderPowers();
     }
+  });
+}
+
+/* An interstitial plays on the way into a new game, every GAMES_PER_AD
+   game-overs. Never mid-run, and never straight after a rewarded ad in the
+   same game - Google spaces ads out anyway, but asking for two in a row is
+   both rude and wasteful. */
+function restartAfterGameOver(){
+  sinceAd++;
+  const due = sinceAd >= GAMES_PER_AD && !rewardedThisGame && Ads.interstitialAvailable();
+  if (!due){
+    store.set('sinceAd', sinceAd);
+    start(daily);
+    return;
+  }
+  sinceAd = 0;
+  store.set('sinceAd', 0);
+  adPlaying = true;
+
+  // The ad can take a moment to appear, and if the SDK hangs the failsafe
+  // waits ten seconds. Without feedback the button just looks broken.
+  const again = $('btn-again');
+  const label = again.textContent;
+  again.textContent = 'Loading\u2026';
+  again.disabled = true;
+  $('btn-second').hidden = true;
+  function restore(){ again.textContent = label; again.disabled = false; }
+
+  Ads.showInterstitial({
+    name: 'between-games',
+    beforeAd: function(){ adPlaying = true; togglePause(true); },
+    afterAd:  function(){ adPlaying = false; },
+    done:     function(){ adPlaying = false; restore(); start(daily); }
   });
 }
 
@@ -893,7 +932,10 @@ document.addEventListener('keydown', function(e){
   const k = e.key;
   if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].indexOf(k) >= 0) e.preventDefault();
 
-  if ((!running || over) && (k === 'Enter' || k === ' ')){ start(daily); return; }
+  if ((!running || over) && (k === 'Enter' || k === ' ')){
+    if (over) restartAfterGameOver(); else start(daily);
+    return;
+  }
 
   switch (k){
     case 'ArrowLeft':  moveActive(-1); break;
@@ -906,7 +948,7 @@ document.addEventListener('keydown', function(e){
     case '2': usePower('wild'); break;
     case '3': usePower('undo'); break;
     case 'p': case 'P': togglePause(); break;
-    case 'r': case 'R': start(daily); break;
+    case 'r': case 'R': if (over) restartAfterGameOver(); else start(daily); break;
   }
 });
 
@@ -932,7 +974,7 @@ document.addEventListener('keydown', function(e){
   boardEl.addEventListener('touchend', function(e){
     const t = e.changedTouches[0];
     const dx = t.clientX - sx, dy = t.clientY - sy, dt = Date.now() - st;
-    if (!running || over){ start(daily); return; }
+    if (!running || over){ if (over) restartAfterGameOver(); else start(daily); return; }
     if (dy < -55 && Math.abs(dy) > Math.abs(dx)){ doHold(); return; }
     if (dy > 45 && Math.abs(dy) > Math.abs(dx)){ hardDrop(); return; }
     if (!moved && dt < 240 && Math.abs(dx) < 16 && Math.abs(dy) < 16) hardDrop();
@@ -946,7 +988,7 @@ function on(id, fn){ const el = $(id); if (el) el.addEventListener('click', fn);
 
 on('btn-start',   function(){ start(false); });
 on('btn-daily',   function(){ start(true);  });
-on('btn-again',   function(){ start(daily); });
+on('btn-again',   restartAfterGameOver);
 on('btn-second',  secondChance);
 on('btn-resume',  function(){ togglePause(false); });
 on('btn-pause',   function(){ togglePause(); });

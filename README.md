@@ -208,6 +208,39 @@ rewarded-video disclosure, GDPR rights, CCPA/CPRA, and a children's-privacy sect
 Use the free one built into AdSense — **Privacy & messaging → European regulations** —
 which overlays this banner and satisfies the requirement.
 
+## Ad formats in use
+
+This site is wired for **H5 Games Ads**, not standard AdSense display units.
+
+| Format | Placement | Opt-in? |
+|---|---|---|
+| Rewarded video | Second Chance after a game over; power-up refill | **Yes, always.** The reward is granted on a completed view, never on a click. |
+| Interstitial | On the transition into a new game, every 3rd game over | No - this is the format's intended use. |
+
+The interstitial is deliberately constrained:
+
+- it fires only on **Play Again after a game over**, never mid-run, and never
+  from the in-game Restart button, which is not a natural break;
+- it is suppressed if the player already watched a rewarded ad in that game;
+- game audio is muted while it plays;
+- `adBreak()` is a request, not a guarantee - Google applies its own frequency
+  capping on top of the `data-ad-frequency-hint="60s"` on the script tag - so
+  the completion path runs whether or not an ad actually showed, and a ten
+  second failsafe starts the next game if the SDK never calls back.
+
+Change the rate with `GAMES_PER_AD` in `game.js`.
+
+**Test ads earn nothing.** While `data-adbreak-test="on"` is on the script tag
+you are seeing test inventory. Switch it off when you are ready to earn:
+
+```bash
+./setup.sh --pub ca-pub-XXXXXXXXXXXXXXXX --h5 --test off
+```
+
+The three display slots (rail, in-content, bottom) need standard AdSense
+display ad units, which are a separate product. They stay hidden until slot IDs
+are configured, so an H5-only account simply does not show them.
+
 ## Auto Ads: leave them OFF
 
 Once your publisher ID is in the page head, Google may offer to run **Auto Ads**,

@@ -239,6 +239,46 @@ const Ads = (function(){
     setTimeout(function(){ if (!settled) done(false); }, 12000);
   }
 
+  /* ------------------------------------------------------------------
+     Interstitial (H5 Games Ads type:'next')
+     ------------------------------------------------------------------
+     Unlike a rewarded ad this is NOT opt-in - it plays on the transition
+     between games. That is the placement the format is designed for. Rules
+     this respects: only at a genuine break (never mid-run), the game always
+     continues afterwards, and audio is muted while it plays.
+
+     adBreak() is a REQUEST, not a guarantee: Google applies its own frequency
+     capping and fill logic, so done() must run whether an ad showed or not,
+     otherwise the player is stranded on a dead screen.
+     ------------------------------------------------------------------ */
+  function interstitialAvailable(){
+    return Boolean(ADS.h5GamesAds && typeof window.adBreak === 'function');
+  }
+
+  function showInterstitial(opts){
+    const done = opts.done || function(){};
+    if (!interstitialAvailable() || rewardBusy){ done(); return; }
+
+    let settled = false;
+    function finish(){
+      if (settled) return;
+      settled = true;
+      if (opts.afterAd) opts.afterAd();
+      done();
+    }
+    try {
+      window.adBreak({
+        type: 'next',
+        name: opts.name || 'next-game',
+        beforeAd: function(){ if (opts.beforeAd) opts.beforeAd(); },
+        afterAd:  finish,
+        adBreakDone: function(){ finish(); }
+      });
+    } catch (e) { finish(); return; }
+    // If the SDK never calls back, never leave the player stuck.
+    setTimeout(finish, 10000);
+  }
+
   let shellEl = null;
   function openShell(opts, statusText){
     closeShell();
@@ -276,6 +316,8 @@ const Ads = (function(){
   return {
     init: init,
     showRewarded: showRewarded,
+    showInterstitial: showInterstitial,
+    interstitialAvailable: interstitialAvailable,
     available: function(){ return rewardKind() !== 'none'; },
     rewardKind: rewardKind,
     resetConsent: function(){
