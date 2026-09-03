@@ -76,10 +76,19 @@ const Ads = (function(){
         '<button class="btn sm" data-c="all">Accept all</button>' +
       '</div>';
     document.body.appendChild(bar);
+
+    // The banner is fixed to the bottom, so without this it sits on top of the
+    // footer — and the footer is where the Privacy Policy link lives.
+    function pad(){ document.body.style.paddingBottom = (bar.offsetHeight + 16) + 'px'; }
+    pad();
+    window.addEventListener('resize', pad);
+
     bar.addEventListener('click', function(e){
       const b = e.target.closest('[data-c]');
       if (!b) return;
       writeConsent(b.dataset.c);
+      window.removeEventListener('resize', pad);
+      document.body.style.paddingBottom = '';
       bar.remove();
       mountDisplayAds();
     });

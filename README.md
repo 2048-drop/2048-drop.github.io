@@ -21,6 +21,7 @@ game.js           game engine
 ads.js            ad slots, consent banner, rewarded video
 ads.txt           authorised sellers      <- required by AdSense
 robots.txt, sitemap.xml
+setup.sh          one-shot go-live configuration
 ```
 
 ## Controls
@@ -120,27 +121,57 @@ The measured distances in the live layout are:
 pushed the game below the fold on a 1080p laptop, which costs more in engagement than the
 unit earns. The game is the first thing on screen at every size.
 
-## Turning ads on
+## Going live: `./setup.sh`
 
-1. Apply at <https://www.google.com/adsense>. Deploy the site first and let it sit — they
-   review a live site, and "thin content" is the most common rejection.
-2. Create three ad units, then edit the `ADS` block at the top of `ads.js`:
+Rather than hunting placeholders through five files by hand, run this. It rewrites the
+canonical and Open Graph URLs on every page, fills in the contact email and site URL in
+the policy pages, deletes the "before you publish" reminder boxes, writes `ads.txt`, adds
+the AdSense site-verification meta tag, and flips the production flags in `ads.js`. It is
+safe to run repeatedly.
 
-```js
-const ADS = {
-  client: 'ca-pub-1234567890123456',
-  slots: { rail:'1234567890', article:'2345678901', bottom:'3456789012' },
-  h5GamesAds: false,
-  testMode: false,
-  showPlaceholders: false,
-  simulateRewards: false
-};
+**Step 1 — before you apply.** You need the site live with real URLs and no placeholders:
+
+```bash
+./setup.sh --url https://yourdomain.com --email you@example.com
 ```
 
-3. Put your real line in `ads.txt` (Google flags a missing or mismatched one).
-4. For rewarded video: apply for **H5 Games Ads** inside AdSense, then set
-   `h5GamesAds: true`. Until then `simulateRewards: true` shows a placeholder countdown so
-   the flow is testable and the game is fully playable with no ad network at all.
+**Step 2 — once AdSense approves you** and you have created the three ad units:
+
+```bash
+./setup.sh --url https://yourdomain.com --email you@example.com \
+           --pub ca-pub-1234567890123456 \
+           --slot-rail 1111111111 --slot-article 2222222222 --slot-bottom 3333333333
+```
+
+That turns off the dashed placeholders and test mode, and writes your real `ads.txt` line.
+
+**Step 3 — once H5 Games Ads is approved**, to switch rewarded video from the simulated
+countdown to real inventory:
+
+```bash
+./setup.sh --h5
+```
+
+The script prints any placeholder it could not resolve, so a run that ends with
+`no placeholders left in any page.` means nothing is waiting on you.
+
+## Pre-submission checklist
+
+Everything structural is already done. What is left is only what needs your real details:
+
+- [ ] Site deployed and reachable over HTTPS
+- [ ] `./setup.sh --url ... --email ...` run, reporting no placeholders left
+- [ ] Every page opens and the footer Privacy Policy link works
+- [ ] `yourdomain.com/ads.txt`, `/robots.txt` and `/sitemap.xml` all load
+- [ ] Site submitted to [Google Search Console](https://search.google.com/search-console)
+      and the sitemap given to it — not required, but approval is smoother when Google has
+      already crawled you
+- [ ] Left live for a few days with some real traffic before applying
+- [ ] Applied at <https://www.google.com/adsense>
+- [ ] After approval: `./setup.sh --pub ... --slot-*` and redeploy
+- [ ] For EEA/UK traffic, turn on AdSense → **Privacy & messaging → European
+      regulations** (a certified CMP, which the built-in banner is not)
+- [ ] Optionally apply for **H5 Games Ads**, then `./setup.sh --h5`
 
 ## What gets you approved
 
