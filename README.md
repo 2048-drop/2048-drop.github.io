@@ -1,38 +1,64 @@
 # 2048 Drop
 
-A falling-block puzzle game that crosses the classic Russian-style block drop with the
-merge maths of 2048. Numbered blocks fall down a five-column well; land one beside a
-matching number and they fuse into double the value. Merges collapse the stack, which
-can trigger chain reactions worth bonus points.
+A falling-block puzzle that crosses the block-drop format with the merge maths of 2048.
+Numbered blocks fall down a five-column well; land one touching a matching number and
+they fuse into double the value. Merges open gaps, gravity collapses the stack, and new
+matches form — chains pay a multiplier.
 
-**Zero dependencies.** One `index.html` file — no build step, no npm, no framework.
+**Zero dependencies.** Static HTML, CSS and JS. No build step, no npm, no framework,
+nothing fetched from a CDN.
 
-## Play
+## Files
 
-Open `index.html` in a browser. That's it.
+```
+index.html        the game
+how-to-play.html  full strategy guide
+about.html        what it is, how it was built, how it is funded
+privacy.html      privacy policy          <- required by AdSense
+terms.html        terms of use
+style.css         all styling, three themes
+game.js           game engine
+ads.js            ad slots, consent banner, rewarded video
+ads.txt           authorised sellers      <- required by AdSense
+robots.txt, sitemap.xml
+```
+
+## Controls
 
 | Input | Action |
 |---|---|
-| `←` `→` | Move the falling block |
-| `↓` | Soft drop (+1 point per row) |
-| `↑` / `Space` | Hard drop (+2 points per row) |
-| `P` | Pause |
-| `R` | Restart |
-| Swipe / tap | Mobile controls |
+| `←` `→` | Steer the falling block |
+| `↓` (or `↑` / `Space`) | Drop straight to the floor, +2 points per row |
+| `C` | Hold the block, or swap with the held one |
+| `1` `2` `3` | Bomb · Wild block · Undo |
+| `P` / `R` | Pause / restart |
+| Swipe, tap, swipe up | Steer, drop, hold — on mobile |
 
-## Rules
+## Features
 
-- A block spawns at the top of the middle column and falls one row at a time.
-- On landing, any two orthogonally adjacent blocks with the same number merge into one
-  block of double the value. The lower block survives on a vertical match, the left
-  block on a horizontal one.
-- Merges leave gaps, gravity pulls everything down, and new matches can form — that is a
-  chain. Chain link *n* scores the merged value × *n*.
-- Speed increases one level per 1,500 points.
-- The game ends when the spawn cell is blocked.
+- **Landing preview** — dashed outline of where the block will rest, green when it will merge
+- **Hold slot** and a **three-block queue**
+- **Power-ups** — bomb (clears 3×3, scores what it destroys), wild block (takes its
+  strongest neighbour's value, guaranteeing a merge), undo (reverts the last drop).
+  One of each to start, one more every 2,500 points
+- **Daily Challenge** — a date-seeded block sequence, identical for every player
+- **Three modes** — Chill, Classic, Blitz
+- **16 achievements**, lifetime statistics, and a personal top-ten table
+- **Three themes** — Midnight, Aurora, Paper — plus sound toggle
+- Cascade particles, screen shake, danger tint on the top rows
+- Everything stored locally; no account, no server, no analytics
 
-Best score is kept in `localStorage`, on the player's own device only. No accounts, no
-tracking, no server.
+## The rules engine
+
+Settling the board is one loop: apply gravity until nothing moves, find every
+non-overlapping pair of touching equal blocks, merge them all at once, repeat. Vertical
+pairs merge downward, horizontal pairs merge left. Each pass is one chain link, and a
+merge scores its value times its link number.
+
+The loop maintains one invariant: **a settled board never contains two touching blocks of
+equal value, and no block floats above an empty cell.** That was verified by simulating
+400 complete games headlessly and asserting it after every drop, and again by driving the
+real page in headless Chrome and reading the invariant back out of the live DOM.
 
 ## Hosting on GitHub Pages
 
@@ -40,74 +66,135 @@ tracking, no server.
 gh repo create 2048-drop --public --source=. --remote=origin --push
 ```
 
-Then in the repo: **Settings → Pages → Source: Deploy from a branch → `main` / `root` → Save.**
+Then **Settings → Pages → Deploy from a branch → `main` / `root` → Save.** Live at
+`https://<username>.github.io/2048-drop/` in about a minute.
 
-The site goes live at `https://<your-username>.github.io/2048-drop/` in about a minute.
+Then replace `example.github.io` with the real URL in: the `<link rel="canonical">` and
+`og:url` tags of all five pages, `robots.txt`, and `sitemap.xml`.
 
-After it's live, update these to the real URL (they currently say `example.github.io`):
+### Custom domain
 
-- the `<link rel="canonical">` tag in `index.html`
-- the two `og:url` / `og:*` meta tags
+Strongly recommended before applying to AdSense — a `github.io` subdomain is approvable
+but a real domain reviews better.
 
-### Custom domain (optional, recommended before applying to AdSense)
+1. Buy a domain, add a `CNAME` file at the repo root containing just the domain.
+2. Point apex `A` records at `185.199.108.153`, `.109.153`, `.110.153`, `.111.153`,
+   and `www` `CNAME` at `<username>.github.io`.
+3. Settings → Pages → Custom domain → **Enforce HTTPS**.
 
-1. Buy a domain (~$10/yr).
-2. Add a file named `CNAME` at the repo root containing just the domain.
-3. At your registrar, point the apex `A` records at GitHub's IPs
-   (`185.199.108.153`, `.109.153`, `.110.153`, `.111.153`) and `www` `CNAME` to
-   `<your-username>.github.io`.
-4. Settings → Pages → Custom domain → enter it → tick **Enforce HTTPS**.
+---
 
-## Ads
+# Monetisation
 
-The page has three ad slots wired up: a top leaderboard, a 300×250 sidebar (hidden below
-900px), and a bottom unit. They are deliberately placed **outside** the play area —
-AdSense will suspend an account for ads a player can click by accident while gaming.
+## Read this first
 
-Until configured, the slots render as dashed placeholders so you can see the layout.
+Two rules decide whether you keep your AdSense account.
 
-### Turning them on
+**1. Never reward, ask for, or hint at ad CLICKS.** "Click the ad for a power-up",
+"support us by clicking", an arrow pointing at a banner — all of it is invalid traffic
+under the AdSense programme policies, and the penalty is permanent termination with your
+unpaid balance refunded to advertisers. There is no small safe amount of this.
 
-1. Apply at <https://www.google.com/adsense>. You need a live site with real content
-   before they'll approve you — deploy to Pages first, ideally on a custom domain, and
-   let it sit for a few days.
-2. Once approved, create three ad units in the AdSense dashboard.
-3. Edit the `ADS` block near the top of the `<script>` in `index.html`:
+**2. Rewarding a player for WATCHING a rewarded video is allowed** — but only through a
+rewarded ad product. On the web that is **Google H5 Games Ads**, which you apply for from
+inside AdSense. A standard display unit can never be used this way. That is what this
+game uses for Second Chance and the power-up refill.
+
+## The 150px rule
+
+Display ads must sit far enough from interactive game elements that a player cannot hit
+one by accident while playing. 150px is the figure Google's game-monetisation guidance
+uses, and accidental-click complaints are a common suspension trigger.
+
+This is enforced structurally, not by eye. `<div class="ad-safe">` spacers sit between
+the play area and every ad slot, sized from the `--ad-safe` token in `style.css`.
+The measured distances in the live layout are:
+
+| Slot | Distance from the board |
+|---|---|
+| `ad-rail` (300×600, desktop only) | 296px |
+| `ad-article` (in-content) | 1,120px |
+| `ad-bottom` (leaderboard) | 354px |
+
+**There is deliberately no ad above the board.** A leaderboard there plus its 150px gap
+pushed the game below the fold on a 1080p laptop, which costs more in engagement than the
+unit earns. The game is the first thing on screen at every size.
+
+## Turning ads on
+
+1. Apply at <https://www.google.com/adsense>. Deploy the site first and let it sit — they
+   review a live site, and "thin content" is the most common rejection.
+2. Create three ad units, then edit the `ADS` block at the top of `ads.js`:
 
 ```js
 const ADS = {
-  client: 'ca-pub-1234567890123456',   // your publisher ID
-  slots: {
-    top:    '1234567890',
-    side:   '2345678901',
-    bottom: '3456789012'
-  },
-  showPlaceholders: true
+  client: 'ca-pub-1234567890123456',
+  slots: { rail:'1234567890', article:'2345678901', bottom:'3456789012' },
+  h5GamesAds: false,
+  testMode: false,
+  showPlaceholders: false,
+  simulateRewards: false
 };
 ```
 
-4. Replace the placeholder line in `ads.txt` with the one AdSense gives you, using your
-   own publisher ID. Google will warn you in the dashboard if this file is missing or
-   wrong.
+3. Put your real line in `ads.txt` (Google flags a missing or mismatched one).
+4. For rewarded video: apply for **H5 Games Ads** inside AdSense, then set
+   `h5GamesAds: true`. Until then `simulateRewards: true` shows a placeholder countdown so
+   the flow is testable and the game is fully playable with no ad network at all.
 
-### Realistic expectations
+## What gets you approved
+
+The reason most game sites get rejected is "low value content" — a page with a game and
+nothing else. This site ships with the fix already in place:
+
+- **Real written content** — a full strategy guide, an about page explaining how it was
+  built and funded, and substantial copy on the home page. Not filler.
+- **Privacy Policy, Terms, and a footer nav** linking them from every page.
+- **A consent banner** with a non-personalised option.
+- `ads.txt`, `robots.txt`, `sitemap.xml`, canonical tags, Open Graph tags, and
+  `VideoGame` structured data.
+- **Original work.** No Tetris trademark anywhere, no copied assets.
+
+Before you submit, replace every `[SQUARE BRACKET]` placeholder in `privacy.html`,
+`terms.html` and `about.html` with your real contact email, site URL and host. A policy
+still saying `[YOUR CONTACT EMAIL]` will fail review on its own.
+
+## Where the privacy policy lives
+
+`privacy.html`, and it is reachable from:
+
+- the footer of **every** page (AdSense requires it be accessible sitewide),
+- the header nav,
+- the cookie consent banner,
+- **Settings → Privacy Policy** inside the game.
+
+It already covers what a Google review looks for: local storage, the AdSense/DoubleClick
+cookie disclosure with Google's required wording, third-party vendor opt-out links, the
+rewarded-video disclosure, GDPR rights, CCPA/CPRA, and a children's-privacy section.
+
+**One thing it does not cover:** for EEA, UK and Swiss traffic Google requires a
+*certified* Consent Management Platform, which the hand-rolled banner in `ads.js` is not.
+Use the free one built into AdSense — **Privacy & messaging → European regulations** —
+which overlays this banner and satisfies the requirement.
+
+## What to actually expect
 
 Casual game traffic monetises at roughly **$0.50–$2.00 per 1,000 pageviews**. A thousand
-visits a day is somewhere near $15–60 a month. Revenue follows traffic, so the work that
-actually pays is getting people to the page — the ad code is the easy part.
+visits a day is about **$15–60 a month**. Rewarded video pays far better per impression
+than display, but only fires when a player opts in, so it scales with engagement rather
+than traffic.
 
-Alternatives worth knowing about, once you have traffic: **Ezoic** (no traffic minimum,
-higher yield than raw AdSense), **Adsterra** or **PropellerAds** (approve almost anyone,
-but lower quality ads). Also consider adding a Ko-fi or Buy Me a Coffee link, which
-converts far better than ads on small sites.
+Revenue is a traffic problem, not an ad-code problem. Once traffic exists, look at
+**Ezoic** (no minimum, typically beats raw AdSense) or **Mediavine/Raptive** (50k+ and
+100k+ sessions/month, much higher rates). A **Ko-fi** link converts better than ads on a
+small site.
 
 ## Naming note
 
-The word "Tetris" is a registered trademark of The Tetris Company and is actively
-enforced, including against free browser games. It is deliberately absent from this
-project's name, title, description, and metadata. Keep it that way, especially on a
-monetised site.
+"Tetris" is a registered trademark of The Tetris Company, actively enforced against free
+browser games. It appears nowhere in this project's name, title, metadata or copy, and it
+should stay that way on a monetised site.
 
 ## Licence
 
-MIT. Do what you like with it.
+MIT.

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to Play — 2048 Drop</title>
+<meta name="description" content="A complete guide to 2048 Drop: the rules, the chain multiplier, when to use bombs and wild blocks, and the staircase strategy that carries you past 1024.">
+<meta name="theme-color" content="#0e0e15">
+<link rel="canonical" href="https://example.github.io/2048-drop/how-to-play.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%23edc22e'/%3E%3Ctext x='32' y='45' font-family='Helvetica,Arial' font-size='31' font-weight='bold' text-anchor='middle' fill='%23fff'%3E2%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="index.html"><span class="mark">2</span>2048&nbsp;<span class="num">Drop</span></a>
+  <nav>
+    <a href="index.html">Play</a>
+    <a href="how-to-play.html" class="on">How to Play</a>
+    <a href="about.html">About</a>
+    <a href="privacy.html">Privacy</a>
+  </nav>
+</header>
+<main class="doc">
+<h1>How to Play 2048 Drop</h1>
+<p class="lede">Everything from the basic rules to the board shapes that carry a run past 1024.</p>
+
+<h2>The rules, in full</h2>
+<p>Blocks fall one at a time down a well five columns wide and ten rows deep. Each block carries a number — nearly always a 2 or a 4, occasionally an 8 once you reach level four. You steer it left and right while it falls, and you can send it straight to the floor whenever you like.</p>
+<p>When a block comes to rest, the board resolves in a loop that repeats until nothing changes:</p>
+<ol>
+  <li><strong>Gravity.</strong> Every block falls as far as it can.</li>
+  <li><strong>Merging.</strong> Any two blocks of equal value that are touching — above, below, left or right — fuse into a single block of double the value.</li>
+  <li>Back to step one.</li>
+</ol>
+<p>Vertical pairs merge downward, into the lower block. Horizontal pairs merge into the left-hand block. Each pass through the loop is one <strong>chain link</strong>, and the loop keeps running until the board is stable — meaning a settled board never contains two touching blocks of the same number.</p>
+<p>The game ends when the top of the middle column is occupied, because there is nowhere left to put the next block.</p>
+
+<h2>Scoring</h2>
+<ul>
+  <li>A merge scores the value of the block it creates, multiplied by its chain link. A 64 made on link one scores 64. The same 64 made on link three scores 192.</li>
+  <li>A hard drop scores two points for every row the block travels, so slamming from the top of an empty well is worth eighteen.</li>
+  <li>Every 2,500 points awards a random power-up.</li>
+  <li>Speed increases one level every 1,500 points in Classic — 1,800 in Chill, 1,200 in Blitz.</li>
+</ul>
+<p>The multiplier is the whole game. Four separate merges of a 32 score 128 in total. One four-link cascade making the same four merges scores 320. Learning to build cascades rather than chase individual pairs is the difference between a 3,000-point run and a 30,000-point one.</p>
+
+<h2>The staircase</h2>
+<p>The single most useful board shape is a descending staircase. Put your largest block in a bottom corner — the left corner suits this game, because horizontal merges resolve leftward — and arrange values so they decrease as you move away from it.</p>
+<p>A staircase works because it is a loaded spring. When the small block at the shallow end finally merges, the result matches its neighbour, which merges, which matches <em>its</em> neighbour, and the whole staircase collapses in one cascade for an enormous multiplier. A board where the big numbers are scattered can never do this: each merge is an isolated event worth face value.</p>
+<p>The corollary is the mistake almost everyone makes early on: dropping a big block in the middle of the well. A 128 stranded in column three splits the board into two narrow wells and can only ever merge with another 128. Keep the heavy end of the board on one side.</p>
+
+<h2>Reading the landing preview</h2>
+<p>The dashed outline shows exactly where the current block will come to rest. When that landing would cause a merge, the outline turns <strong>green</strong>. Two things follow from this:</p>
+<ul>
+  <li>Sweep across the columns before you drop. If any column shows green, you have a free merge available, and free merges are almost always worth taking.</li>
+  <li>A green landing on a column that is one block from the top is not a rescue — it is one merge, and the stack may still be too high afterwards. Check the height, not just the colour.</li>
+</ul>
+
+<h2>The hold slot</h2>
+<p>Press <strong>C</strong> to bank the falling block. The next one arrives immediately; press C again to swap the held block back in. You get one hold per block, so you cannot shuffle indefinitely.</p>
+<p>Two good uses. First, an awkward piece: a 4 arrives when your board is all 2s and there is nowhere useful for it — bank it and take the 2 instead. Second, setting up a cascade: hold the block that will trigger the collapse, build the rest of the staircase, then bring it back when the board is loaded.</p>
+
+<h2>Power-ups</h2>
+<h3>Bomb (key 1)</h3>
+<p>Turns the falling block into a bomb. Where it lands, it destroys itself and all eight surrounding blocks, and you score the total value of everything removed. Use it on the densest, most tangled part of the board — usually the middle rows, where mismatched small numbers accumulate and refuse to merge. Do not waste it on a nearly empty board; the payout scales with what it destroys.</p>
+<h3>Wild block (key 2)</h3>
+<p>Turns the falling block into a wild block. On landing it adopts the value of its strongest neighbour, which guarantees a merge — and because it becomes the <em>strongest</em> neighbour&rsquo;s value, it is the fastest way to double a big block you have been unable to pair. Drop it beside your corner block when you have no matching partner in sight.</p>
+<h3>Undo (key 3)</h3>
+<p>Reverts the last drop, board and score together. It costs nothing but the charge, so use it the moment you realise you have blocked your own corner. You can only go back one move.</p>
+
+<h2>Modes</h2>
+<ul>
+  <li><strong>Chill</strong> — slow fall, gentle speed ramp. Best for learning the cascade patterns without pressure.</li>
+  <li><strong>Classic</strong> — the standard curve, and the mode the Daily Challenge uses.</li>
+  <li><strong>Blitz</strong> — fast from the first block and it accelerates hard. Hard drops are mandatory; there is no time to steer gently.</li>
+</ul>
+
+<h2>The Daily Challenge</h2>
+<p>Every day, every player receives the same sequence of blocks in the same order, generated from that day&rsquo;s date. Nothing is random, so the only difference between your score and anyone else&rsquo;s is placement. It is the honest way to compare runs, and it makes a bad result genuinely instructive: the pieces were not against you.</p>
+
+<h2>Ten things that will raise your score</h2>
+<ol>
+  <li>Commit to one corner for your largest block and never move it.</li>
+  <li>Keep values descending away from that corner.</li>
+  <li>Take free merges when the preview is green, unless taking one breaks the staircase.</li>
+  <li>Never strand a large block in a middle column.</li>
+  <li>Watch the next-three queue, not just the current block.</li>
+  <li>Bank an awkward block instead of forcing it somewhere bad.</li>
+  <li>Save bombs for a cluttered mid-board, not an empty one.</li>
+  <li>Use a wild block to double the biggest thing you own.</li>
+  <li>Undo immediately, not three drops later.</li>
+  <li>When the danger tint appears on the top rows, stop building and start merging — clearing height beats scoring points you will not live to spend.</li>
+</ol>
+
+<p style="margin-top:24px"><a href="index.html">&larr; Back to the game</a></p>
+</main>
+<footer class="site-foot">
+  <span>&copy; <span id="year"></span> 2048 Drop</span>
+  <nav>
+    <a href="index.html">Play</a>
+    <a href="how-to-play.html">How to Play</a>
+    <a href="about.html">About</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html">Terms</a>
+  </nav>
+</footer>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="ads.js"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About — 2048 Drop</title>
+<meta name="description" content="What 2048 Drop is, who made it, how it was built, and how it is funded.">
+<meta name="theme-color" content="#0e0e15">
+<link rel="canonical" href="https://example.github.io/2048-drop/about.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%23edc22e'/%3E%3Ctext x='32' y='45' font-family='Helvetica,Arial' font-size='31' font-weight='bold' text-anchor='middle' fill='%23fff'%3E2%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-head">
+  <a class="brand" href="index.html"><span class="mark">2</span>2048&nbsp;<span class="num">Drop</span></a>
+  <nav>
+    <a href="index.html">Play</a>
+    <a href="how-to-play.html">How to Play</a>
+    <a href="about.html" class="on">About</a>
+    <a href="privacy.html">Privacy</a>
+  </nav>
+</header>
+<main class="doc">
+<h1>About 2048 Drop</h1>
+<p class="lede">A small, free, hand-built puzzle game — and an honest account of how it works and how it pays for itself.</p>
+
+<h2>What it is</h2>
+<p>2048 Drop is a browser puzzle game that crosses two ideas. From the falling-block genre it takes the well, the descending piece, and the pressure of a stack creeping toward the ceiling. From 2048 it takes merge arithmetic: matching numbers fuse and double instead of clearing lines.</p>
+<p>The combination changes both. In a line-clearing game you are solving a packing problem — fit the shapes, leave no holes. Here holes are the point: every merge opens one, everything above falls in, and if you have arranged the board well that fall causes another merge. The game rewards deliberately building an unstable structure and then knocking it over.</p>
+
+<h2>How it was built</h2>
+<p>It is a static website. Three files do the work — one HTML page, one stylesheet, one script — with no framework, no build step, no bundler and no dependencies. Nothing is fetched from a CDN. The whole game is a few tens of kilobytes and runs offline once the page has loaded.</p>
+<p>That is a deliberate choice. A puzzle game does not need a virtual DOM, and a page that loads instantly on a slow phone connection is worth more than any amount of architecture. Rendering is plain absolutely-positioned elements moved with CSS transforms, which the browser hands to the GPU for free.</p>
+<p>The rules engine is small enough to state exactly: apply gravity until nothing moves, find every non-overlapping pair of touching equal blocks, merge them all at once, repeat. It maintains one invariant — a settled board never contains two touching blocks of equal value, and no block ever floats above an empty cell. The engine was tested by simulating several hundred complete games headlessly and asserting that invariant after every single drop.</p>
+
+<h2>Your data</h2>
+<p>There is no account and no server. Scores, statistics, achievements and settings are written to your browser&rsquo;s local storage and stay on your device — we could not read them if we wanted to. Nothing about you is collected, and there is no analytics script on the page. The full detail is in the <a href="privacy.html">Privacy Policy</a>.</p>
+
+<h2>How it is funded</h2>
+<p>The game is free and always will be. It is paid for by advertising, and we would rather be plain about that than pretend otherwise.</p>
+<p>Ads sit in fixed slots above, beside and below the game, kept a wide margin away from anything you interact with so that you cannot hit one by accident while playing. There are no pop-ups, no interstitials between games, no timers you have to wait out, and nothing covering the board.</p>
+<p>Two optional rewards — a second chance after a game over, and a power-up refill — are offered in exchange for watching a short video. Those are always your choice, and turning them down costs you nothing but the reward. We will never ask you to click an advertisement, and no reward in this game is given for clicking one. If you use an ad blocker, everything still works.</p>
+
+<h2>Credits and independence</h2>
+<p>2048 Drop is an original implementation. It owes an obvious debt to Gabriele Cirulli&rsquo;s 2048, which popularised the merge mechanic and released its own source openly, and to the long tradition of falling-block puzzles. It is not affiliated with, endorsed by or connected to either 2048 or The Tetris Company, and it does not use their names, shapes or assets.</p>
+<p>The source is available under the MIT licence. If you want to take the engine apart, fork it, or build something better on top of it, please do.</p>
+
+<h2>Contact</h2>
+<p>Bug reports, ideas and complaints: <code>[YOUR CONTACT EMAIL]</code></p>
+
+<p style="margin-top:24px"><a href="index.html">&larr; Back to the game</a></p>
+</main>
+<footer class="site-foot">
+  <span>&copy; <span id="year"></span> 2048 Drop</span>
+  <nav>
+    <a href="index.html">Play</a>
+    <a href="how-to-play.html">How to Play</a>
+    <a href="about.html">About</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html">Terms</a>
+  </nav>
+</footer>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="ads.js"></script>
+</body>
+</html>
