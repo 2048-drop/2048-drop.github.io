@@ -208,6 +208,18 @@ rewarded-video disclosure, GDPR rights, CCPA/CPRA, and a children's-privacy sect
 Use the free one built into AdSense — **Privacy & messaging → European regulations** —
 which overlays this banner and satisfies the requirement.
 
+## Auto Ads: leave them OFF
+
+Once your publisher ID is in the page head, Google may offer to run **Auto Ads**,
+which place units automatically wherever its model thinks they will earn. On a game
+site that is actively dangerous: Auto Ads do not know where the play area is, and can
+drop an anchor or in-page unit right beside the board, which is exactly the
+accidental-click setup the 150px separation exists to prevent.
+
+Keep Auto Ads **off** for this site (AdSense → Ads → Your sites → toggle off) and use
+the three manual units. If you do want Auto Ads, exclude the game page and restrict
+placements — but the manual units are the safe default here.
+
 ## What to actually expect
 
 Casual game traffic monetises at roughly **$0.50–$2.00 per 1,000 pageviews**. A thousand

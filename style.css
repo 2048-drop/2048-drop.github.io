@@ -4,66 +4,84 @@
    a theme swap is a token swap, never a rule rewrite.
    ===================================================================== */
 
-/* ---------- tokens: Midnight (default) ---------- */
-:root{
-  --bg-1:#0e0e15;
-  --bg-2:#171724;
-  --glow:rgba(120,110,255,.18);
-  --panel:rgba(255,255,255,.045);
-  --panel-solid:#1b1b28;
-  --panel-hi:rgba(255,255,255,.075);
-  --line:rgba(255,255,255,.10);
-  --line-hi:rgba(255,255,255,.20);
-  --text:#eeecfa;
-  --muted:#9694b0;
-  --faint:#5d5b73;
-  --accent:#edc22e;
+/* ---------- tokens: Midnight (default) ----------
+   The board surface is deliberately LIGHTER than the page and the cells are
+   darker than the board, so the well reads as a physical object instead of
+   black-on-black. Every theme keeps that relationship. */
+:root, html[data-theme="midnight"]{
+  --bg-1:#10131f;
+  --bg-2:#1b2138;
+  --glow:rgba(124,109,255,.22);
+  --panel:rgba(255,255,255,.055);
+  --panel-solid:#222941;
+  --panel-hi:rgba(255,255,255,.095);
+  --line:rgba(255,255,255,.12);
+  --line-hi:rgba(255,255,255,.24);
+  --text:#eef0fb;
+  --muted:#9ea1c0;
+  --faint:#6a6e8d;
+  --accent:#f5c144;
   --accent-ink:#2a2410;
-  --danger:#ff5c5c;
+  --danger:#ff6b6b;
   --good:#4ade80;
-  --slot:rgba(255,255,255,.04);
-  --board:rgba(0,0,0,.28);
+  --scrim:rgba(16,19,31,.93);
+  --scrim-modal:rgba(10,12,22,.78);
+  --slot:rgba(0,0,0,.24);
+  --board:#2b3154;
 
   --gap:8px;
   --cell:min(62px, 14.5vw, 5.9vh);
   --radius:12px;
-  --ad-safe:150px;          /* AdSense: keep ads this far from play area */
+  --ad-safe:150px;
   --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   --mono:"SF Mono",ui-monospace,"Cascadia Mono",Menlo,monospace;
 }
 
-/* ---------- theme: Aurora ---------- */
-html[data-theme="aurora"]{
-  --bg-1:#05131a;
-  --bg-2:#07222e;
-  --glow:rgba(0,240,200,.20);
-  --accent:#2ff3c8;
-  --accent-ink:#02201a;
-  --text:#e6fbf7;
-  --muted:#7fb4ac;
-  --faint:#3f6d68;
-  --line:rgba(47,243,200,.16);
-  --line-hi:rgba(47,243,200,.32);
-  --panel-solid:#0a2a36;
+/* ---------- theme: Classic ----------
+   The warm palette the 2048 tile colours were actually designed against. */
+html[data-theme="classic"]{
+  --bg-1:#faf8ef;
+  --bg-2:#f1ebdc;
+  --glow:rgba(237,157,49,.18);
+  --panel:rgba(119,110,101,.075);
+  --panel-solid:#fffdf7;
+  --panel-hi:rgba(119,110,101,.12);
+  --line:rgba(119,110,101,.20);
+  --line-hi:rgba(119,110,101,.38);
+  --text:#5f574f;
+  --muted:#948b80;
+  --faint:#b0a698;
+  --accent:#ed9d31;
+  --accent-ink:#fffdf7;
+  --danger:#e05252;
+  --good:#5fb87a;
+  --scrim:rgba(250,248,239,.95);
+  --scrim-modal:rgba(187,173,160,.55);
+  --slot:rgba(238,228,218,.42);
+  --board:#bbada0;
 }
 
-/* ---------- theme: Paper (light) ---------- */
-html[data-theme="paper"]{
-  --bg-1:#f6f4ee;
-  --bg-2:#ece7dc;
-  --glow:rgba(200,170,90,.20);
-  --panel:rgba(0,0,0,.035);
-  --panel-solid:#fffdf8;
-  --panel-hi:rgba(0,0,0,.06);
-  --line:rgba(0,0,0,.10);
-  --line-hi:rgba(0,0,0,.20);
-  --text:#3b3730;
-  --muted:#7d7669;
-  --faint:#a8a091;
-  --accent:#d9a319;
-  --accent-ink:#fffdf8;
-  --slot:rgba(0,0,0,.05);
-  --board:rgba(0,0,0,.05);
+/* ---------- theme: Aurora ---------- */
+html[data-theme="aurora"]{
+  --bg-1:#04141c;
+  --bg-2:#0a2836;
+  --glow:rgba(0,240,200,.24);
+  --panel:rgba(47,243,200,.075);
+  --panel-solid:#0d3140;
+  --panel-hi:rgba(47,243,200,.13);
+  --line:rgba(47,243,200,.20);
+  --line-hi:rgba(47,243,200,.38);
+  --text:#e4fbf6;
+  --muted:#86b9b1;
+  --faint:#547f79;
+  --accent:#2ff3c8;
+  --accent-ink:#02201a;
+  --danger:#ff6b6b;
+  --good:#5cf0a8;
+  --scrim:rgba(4,20,28,.93);
+  --scrim-modal:rgba(3,16,22,.78);
+  --slot:rgba(0,0,0,.24);
+  --board:#0f4152;
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -121,7 +139,7 @@ nav a.on{color:var(--text);background:var(--panel)}
 .ad{display:flex;align-items:center;justify-content:center;overflow:hidden;width:100%}
 .ad-bottom{max-width:970px;min-height:90px;margin:0 auto}
 .ad-article{max-width:728px;min-height:250px;margin:26px auto}
-.ad-rail{width:300px;min-height:600px;flex:none}
+.ad-rail{min-height:600px;flex:none}
 .ad-safe{flex:none;pointer-events:none}
 .ad-safe-v{width:100%;height:var(--ad-safe)}
 .ad-safe-h{width:var(--ad-safe);align-self:stretch}
@@ -141,13 +159,32 @@ nav a.on{color:var(--text);background:var(--panel)}
 /* =====================================================================
    Game layout
    ===================================================================== */
+/* Three columns so the board sits dead centre in the viewport and the rail ad
+   lives in the right gutter. With the ad as a flex sibling the game was pushed
+   off-centre by half the ad's width. */
 .stage{
-  width:100%;max-width:1240px;
-  display:flex;align-items:flex-start;justify-content:center;
+  width:100%;max-width:1600px;margin:0 auto;
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:start;
 }
+.game{grid-column:2}
+.rail-ad{grid-column:3;justify-self:start;display:none;align-items:flex-start}
+/* A centred game plus a 150px gap plus a 300px unit does not fit a 1440px
+   screen, so the rail steps down to a 160px skyscraper rather than shoving
+   the board sideways. Below 1260px it drops out entirely. */
+@media (min-width:1260px){ .rail-ad{display:flex} .ad-rail{width:160px} }
+@media (min-width:1560px){ .ad-rail{width:300px} }
 .game{display:flex;gap:14px;align-items:flex-start}
-.rail{display:flex;flex-direction:column;gap:10px;width:118px;flex:none}
-.rail-r{width:132px}
+.rail{display:flex;flex-direction:column;gap:10px;width:124px;flex:none}
+.rail-r{width:124px}          /* equal rails keep the board on the page centre */
+
+/* Without an explicit width this column stretches to its widest child - the
+   toolbar - and the board panel grows with it, leaving the tiles stranded in
+   an oversized well. */
+.board-col{
+  display:flex;flex-direction:column;
+  width:calc(5 * var(--cell) + 6 * var(--gap));
+  flex:none;
+}
 
 .card{
   background:var(--panel);border:1px solid var(--line);
@@ -178,7 +215,7 @@ nav a.on{color:var(--text);background:var(--panel)}
   display:grid;place-items:center;font-weight:800;font-size:15px;
   box-shadow:inset 0 -3px 0 rgba(0,0,0,.13);
 }
-.chip.sm{width:32px;height:32px;font-size:12px;opacity:.62}
+.chip.sm{width:32px;height:32px;font-size:12px;opacity:.82}
 .chip.empty{background:var(--panel-hi);color:var(--faint);box-shadow:none;border:1px dashed var(--line)}
 
 /* power-ups */
@@ -208,9 +245,9 @@ nav a.on{color:var(--text);background:var(--panel)}
    ===================================================================== */
 .board-wrap{
   position:relative;padding:var(--gap);
-  background:var(--board);border:1px solid var(--line);
+  background:var(--board);
   border-radius:16px;
-  box-shadow:0 24px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
+  box-shadow:0 22px 55px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.09);
 }
 .board-wrap.shake{animation:shake 260ms cubic-bezier(.36,.07,.19,.97)}
 @keyframes shake{
@@ -337,11 +374,10 @@ nav a.on{color:var(--text);background:var(--panel)}
    ===================================================================== */
 .overlay{
   position:absolute;inset:0;border-radius:16px;z-index:6;
-  background:rgba(10,10,18,.9);backdrop-filter:blur(4px);
+  background:var(--scrim);backdrop-filter:blur(4px);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:11px;text-align:center;padding:20px;
 }
-html[data-theme="paper"] .overlay{background:rgba(246,244,238,.94)}
 .overlay[hidden],[hidden]{display:none !important}
 .overlay h2{font-size:clamp(21px,4.6vw,28px);font-weight:800;letter-spacing:-.6px}
 .overlay p{color:var(--muted);font-size:13.5px;max-width:250px;line-height:1.55}
@@ -364,7 +400,7 @@ html[data-theme="paper"] .overlay{background:rgba(246,244,238,.94)}
 
 .modal{
   position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:18px;
-  background:rgba(6,6,12,.72);backdrop-filter:blur(6px);
+  background:var(--scrim-modal);backdrop-filter:blur(6px);
 }
 .modal-card{
   background:var(--panel-solid);border:1px solid var(--line);
@@ -428,7 +464,7 @@ table.lb .rk{color:var(--faint);width:26px;font-weight:700}
    ===================================================================== */
 .toolbar{display:flex;gap:7px;width:100%;margin-top:11px;flex-wrap:wrap}
 .toolbar button{
-  flex:1;min-width:78px;background:var(--panel);border:1px solid var(--line);
+  flex:1 1 92px;min-width:0;background:var(--panel);border:1px solid var(--line);
   color:var(--muted);border-radius:9px;padding:9px 6px;
   font:500 12.5px var(--font);cursor:pointer;transition:color 140ms,border-color 140ms;
 }
@@ -503,13 +539,13 @@ article.home li{margin-bottom:6px}
 /* =====================================================================
    Responsive
    ===================================================================== */
-@media (max-width:1120px){
-  .ad-rail,.ad-safe-h{display:none}
+@media (max-width:1259px){
+  .rail-ad{display:none}
 }
 @media (max-width:820px){
   :root{--cell:min(58px, 16.5vw, 6.4vh); --ad-safe:150px}
-  .rail{width:88px}
-  .rail-r{width:96px}
+  .rail{width:92px}
+  .rail-r{width:92px}
   .readout .v{font-size:19px}
   .chip{width:36px;height:36px;font-size:13px}
   .power .nm{display:none}
@@ -529,8 +565,9 @@ article.home li{margin-bottom:6px}
   nav{gap:1px}
   nav a{padding:5px 7px;font-size:12px}
 
-  .stage{width:100%}
-  .game{flex-direction:column;align-items:center;gap:7px;width:100%}
+  .stage{width:100%;grid-template-columns:1fr}
+  .game{grid-column:1;flex-direction:column;align-items:center;gap:7px;width:100%}
+  .board-col{width:auto}
   .rail,.rail-r{
     flex-direction:row;width:100%;max-width:440px;
     gap:5px;flex-wrap:wrap;justify-content:center;

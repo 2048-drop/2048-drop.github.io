@@ -1,5 +1,2 @@
-# ads.txt — authorised digital sellers
-# Replace the publisher ID below with your own once AdSense approves you.
-# Google will flag a missing or mismatched ads.txt in your AdSense dashboard.
-#
-# google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
+# ads.txt - authorised digital sellers
+google.com, pub-5623328978041556, DIRECT, f08c47fec0942fa0

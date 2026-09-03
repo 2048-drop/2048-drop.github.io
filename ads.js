@@ -24,7 +24,7 @@
 
 const ADS = {
   /* --- fill these in after AdSense approves you --- */
-  client: '',                    // 'ca-pub-1234567890123456'
+  client: 'ca-pub-5623328978041556',                    // 'ca-pub-1234567890123456'
   slots: {
     rail:    '',                 // '1234567890'  300x600 beside the game
     article: '',                 //               in-content rectangle
@@ -37,7 +37,7 @@ const ADS = {
 
   /* Testing knobs — turn both off in production. */
   testMode: true,                // adds data-adbreak-test=on
-  showPlaceholders: true,        // dashed boxes so the layout is visible
+  showPlaceholders: true,        // dashed boxes, only while no client is set
   simulateRewards: true          // fake a 5s rewarded video pre-approval
 };
 
@@ -107,6 +107,15 @@ const Ads = (function(){
   function loadScript(){
     if (scriptLoaded || !ADS.client) return;
     scriptLoaded = true;
+    window.adsbygoogle = window.adsbygoogle || [];
+    if (document.querySelector('script[src*="adsbygoogle.js"]')){
+      // Already loaded from the page <head> (the snippet AdSense gives you).
+      if (ADS.h5GamesAds && !window.adBreak){
+        window.adBreak = window.adConfig = function(o){ window.adsbygoogle.push(o); };
+        window.adConfig({ preloadAdBreaks:'on', sound:'on' });
+      }
+      return;
+    }
     const s = document.createElement('script');
     s.async = true;
     s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + ADS.client;
@@ -151,7 +160,7 @@ const Ads = (function(){
         if (consent === 'limited') window.adsbygoogle.requestNonPersonalizedAds = 1;
         window.adsbygoogle.push({});
 
-      } else if (ADS.showPlaceholders){
+      } else if (ADS.showPlaceholders && !live){
         host.dataset.filled = '1';
         const ph = document.createElement('div');
         ph.className = 'ad-ph';

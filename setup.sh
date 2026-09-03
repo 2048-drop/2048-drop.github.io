@@ -71,12 +71,16 @@ for f in PAGES:
     s = re.sub(r'\n<div class="callout">\s*\n\s*<p><strong>Before you publish:.*?</div>\n',
                '\n', s, flags=re.S)
 
-    # AdSense site-verification meta, right after theme-color
+    # AdSense verification meta + the loader snippet, in <head> on every page.
+    # Google's own instructions say to put the script in the head, and site
+    # review is more reliable when it is literally there rather than injected.
     if pub:
         s = re.sub(r'\n<meta name="google-adsense-account"[^>]*>', '', s)
-        s = s.replace('<meta name="theme-color" content="#0e0e15">',
-                      '<meta name="theme-color" content="#0e0e15">\n'
-                      '<meta name="google-adsense-account" content="%s">' % pub)
+        s = re.sub(r'\n<script async src="https://pagead2\.googlesyndication\.com[^>]*></script>', '', s)
+        snippet = ('\n<meta name="google-adsense-account" content="%s">'
+                   '\n<script async src="https://pagead2.googlesyndication.com/pagead/js/'
+                   'adsbygoogle.js?client=%s" crossorigin="anonymous"></script>' % (pub, pub))
+        s = re.sub(r'(<meta name="theme-color" content="[^"]*">)', lambda m: m.group(1) + snippet, s, count=1)
 
     if s != orig:
         open(f,'w').write(s); changed.append(f)

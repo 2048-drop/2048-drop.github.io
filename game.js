@@ -766,9 +766,16 @@ function setMode(m){
   });
 }
 
+const THEMES = [
+  { id:'midnight', nm:'Midnight' },
+  { id:'classic',  nm:'Classic'  },
+  { id:'aurora',   nm:'Aurora'   }
+];
 function setTheme(t){
+  if (t === 'paper') t = 'classic';          // renamed; migrate old preference
+  if (!THEMES.some(function(x){ return x.id === t; })) t = 'midnight';
   theme = t;
-  document.documentElement.setAttribute('data-theme', t === 'midnight' ? '' : t);
+  document.documentElement.setAttribute('data-theme', t);
   store.set('theme', t);
 }
 
@@ -849,9 +856,9 @@ function showSettings(){
   const body =
     '<div class="tilebox" style="margin-bottom:9px"><div class="k">Theme</div>' +
       '<div class="modes" style="margin-top:8px">' +
-        ['midnight','aurora','paper'].map(function(t){
-          return '<button data-theme="' + t + '"' + (theme === t ? ' class="on"' : '') + '>' +
-                 t.charAt(0).toUpperCase() + t.slice(1) + '</button>';
+        THEMES.map(function(t){
+          return '<button data-theme="' + t.id + '"' + (theme === t.id ? ' class="on"' : '') + '>' +
+                 t.nm + '</button>';
         }).join('') +
       '</div></div>' +
     '<div class="tilebox"><div class="k">Sound</div>' +
