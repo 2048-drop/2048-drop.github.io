@@ -15,7 +15,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-URL=""; EMAIL=""; PUB=""; HOST=""; RAIL=""; ARTICLE=""; BOTTOM=""; H5=""; BUMP=""
+URL=""; EMAIL=""; PUB=""; HOST=""; RAIL=""; ARTICLE=""; BOTTOM=""; H5=""; BUMP=""; TEST=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --url)          URL="${2:-}"; shift 2 ;;
@@ -27,13 +27,14 @@ while [ $# -gt 0 ]; do
     --slot-bottom)  BOTTOM="${2:-}"; shift 2 ;;
     --h5)           H5="1"; shift ;;
     --bump)         BUMP="1"; shift ;;
+    --test)         TEST="${2:-}"; shift 2 ;;
     -h|--help)      sed -n '2,16p' "$0"; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 1 ;;
   esac
 done
 
 URL="$URL" EMAIL="$EMAIL" PUB="$PUB" HOST="$HOST" \
-RAIL="$RAIL" ARTICLE="$ARTICLE" BOTTOM="$BOTTOM" H5="$H5" BUMP="$BUMP" python3 - <<'PY'
+RAIL="$RAIL" ARTICLE="$ARTICLE" BOTTOM="$BOTTOM" H5="$H5" BUMP="$BUMP" TEST="$TEST" python3 - <<'PY'
 import os, re, glob, sys
 
 url     = os.environ['URL'].rstrip('/')
@@ -45,6 +46,11 @@ h5      = os.environ['H5'] == '1'
 changed = []
 
 PAGES = ['index.html','how-to-play.html','about.html','privacy.html','terms.html']
+
+_ads = open('ads.js').read()
+h5_on   = h5 or re.search(r'  h5GamesAds: *true', _ads) is not None
+_test   = os.environ.get('TEST','').lower()
+test_on = (_test == 'on') if _test in ('on','off') else (re.search(r'  testMode: *true', _ads) is not None)
 
 # Whatever base URL the site currently carries, so re-pointing an already
 # configured site to a new domain works, not just the first run.
@@ -78,9 +84,12 @@ for f in PAGES:
     if pub:
         s = re.sub(r'\n<meta name="google-adsense-account"[^>]*>', '', s)
         s = re.sub(r'\n<script async src="https://pagead2\.googlesyndication\.com[^>]*></script>', '', s)
+        # H5 Games Ads serves test ads only while data-adbreak-test is present.
+        test_attr = ' data-adbreak-test="on"' if (h5_on and test_on) else ''
         snippet = ('\n<meta name="google-adsense-account" content="%s">'
                    '\n<script async src="https://pagead2.googlesyndication.com/pagead/js/'
-                   'adsbygoogle.js?client=%s" crossorigin="anonymous"></script>' % (pub, pub))
+                   'adsbygoogle.js?client=%s"%s crossorigin="anonymous"></script>'
+                   % (pub, pub, test_attr))
         s = re.sub(r'(<meta name="theme-color" content="[^"]*">)', lambda m: m.group(1) + snippet, s, count=1)
 
     if s != orig:
@@ -100,7 +109,9 @@ if live:
     s = re.sub(r'(  showPlaceholders: *)true', r'\1false', s)
 if h5:
     s = re.sub(r'(  h5GamesAds: *)false', r'\1true', s)
-    s = re.sub(r'(  simulateRewards: *)true', r'\1false', s)
+    s = re.sub(r'(  rewardsWithoutAds: *)true', r'\1false', s)
+if _test in ('on','off'):
+    s = re.sub(r'(  testMode: *)(true|false)', lambda m: m.group(1) + ('true' if _test=='on' else 'false'), s)
 if s != orig:
     open('ads.js','w').write(s); changed.append('ads.js')
 
@@ -157,9 +168,11 @@ if url:
     else:
         print("all pages, robots.txt and sitemap.xml now point at " + url)
 
-print("\nads.js: client=%s  slots=%s  placeholders=%s  h5GamesAds=%s" % (
+print("\nads.js: client=%s  slots=%s  placeholders=%s  h5GamesAds=%s  testMode=%s  rewardsWithoutAds=%s" % (
     (re.search(r"  client: '([^']*)'", open('ads.js').read()).group(1) or '(unset)'),
     ','.join(v or '-' for v in slots.values()) if any(slots.values()) else '(unset)',
     re.search(r'  showPlaceholders: *(\w+)', open('ads.js').read()).group(1),
-    re.search(r'  h5GamesAds: *(\w+)', open('ads.js').read()).group(1)))
+    re.search(r'  h5GamesAds: *(\w+)', open('ads.js').read()).group(1),
+    re.search(r'  testMode: *(\w+)', open('ads.js').read()).group(1),
+    re.search(r'  rewardsWithoutAds: *(\w+)', open('ads.js').read()).group(1)))
 PY

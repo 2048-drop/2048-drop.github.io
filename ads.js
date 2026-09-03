@@ -20,6 +20,14 @@
 
    4. Never write "click our ads", "support us by clicking", or anything
       that draws attention to the ads as ads.
+
+   5. There is deliberately NO ad slot inside the rewarded dialog. A rewarded
+      ad is rendered by the H5 Games Ads SDK itself, full screen - adBreak()
+      takes over the display, so there is nothing to place. Putting a standard
+      display unit behind a "watch this to get a reward" prompt would be
+      incentivised engagement with a non-rewarded unit, which is the exact
+      violation rule 1 describes. If no rewarded provider is available we do
+      not show an ad-shaped dialog at all; see rewardKind() below.
    ===================================================================== */
 
 const ADS = {
@@ -33,12 +41,13 @@ const ADS = {
 
   /* Apply for H5 Games Ads inside AdSense, then flip this on. It enables
      the rewarded video used by Second Chance and the power-up refill. */
-  h5GamesAds: false,
+  h5GamesAds: true,
 
   /* Testing knobs — turn both off in production. */
   testMode: true,                // adds data-adbreak-test=on
   showPlaceholders: true,        // dashed boxes, only while no client is set
-  simulateRewards: true          // fake a 5s rewarded video pre-approval
+  rewardsWithoutAds: false        // no rewarded provider yet? grant the bonus
+                                 // outright rather than fake an ad
 };
 
 const Ads = (function(){
@@ -183,8 +192,21 @@ const Ads = (function(){
      The reward is granted on adViewed (a completed VIEW). Nothing here
      ever depends on a click.
      ------------------------------------------------------------------ */
+  /* Three possible states, and the UI must not lie about which one it is in:
+       'video'  - a real rewarded ad will play, so ad wording is honest
+       'direct' - no rewarded provider; grant the bonus with NO ad framing
+                  rather than showing a fake "sponsor message"
+       'none'   - rewards disabled entirely                                */
+  function rewardKind(){
+    if (ADS.h5GamesAds && typeof window.adBreak === 'function') return 'video';
+    if (ADS.rewardsWithoutAds) return 'direct';
+    return 'none';
+  }
+
   function showRewarded(opts){
     if (rewardBusy) return;
+    const kind = rewardKind();
+    if (kind === 'none'){ if (opts.onSkip) opts.onSkip(); return; }
     rewardBusy = true;
 
     let settled = false;
@@ -197,44 +219,24 @@ const Ads = (function(){
       else { if (opts.onSkip) opts.onSkip(); }
     }
 
-    /* Real H5 Games Ads path */
-    if (ADS.h5GamesAds && typeof window.adBreak === 'function'){
-      openShell(opts, 'Loading sponsor message…');
-      window.adBreak({
-        type: 'reward',
-        name: opts.name,
-        beforeReward: function(showAdFn){ showAdFn(); },
-        adViewed:    function(){ done(true); },
-        adDismissed: function(){ done(false); },
-        adBreakDone: function(info){
-          if (!settled) done(info && info.breakStatus === 'viewed');
-        }
-      });
-      // If the SDK never calls back (blocker, no fill), do not hang the game.
-      setTimeout(function(){ if (!settled) done(false); }, 12000);
-      return;
-    }
+    /* No rewarded inventory: just give the bonus. No countdown, no spinner,
+       no "sponsor message" - nothing that implies an ad the player is not
+       actually being shown. */
+    if (kind === 'direct'){ done(true); return; }
 
-    /* Pre-approval fallback: a visible placeholder so the flow is testable
-       and the game stays fully playable without any ad network. */
-    if (ADS.simulateRewards){
-      let left = 5;
-      const shell = openShell(opts, 'Sponsor message · ' + left + 's');
-      const timer = setInterval(function(){
-        left--;
-        const t = shell.querySelector('[data-count]');
-        if (t) t.textContent = 'Sponsor message · ' + left + 's';
-        const ring = shell.querySelector('.ring');
-        if (ring) ring.textContent = left;
-        if (left <= 0){ clearInterval(timer); done(true); }
-      }, 1000);
-      shell.addEventListener('click', function(e){
-        if (e.target.closest('[data-skip]')){ clearInterval(timer); done(false); }
-      });
-      return;
-    }
-
-    done(false);
+    openShell(opts, 'Loading ad\u2026');
+    window.adBreak({
+      type: 'reward',
+      name: opts.name,
+      beforeReward: function(showAdFn){ showAdFn(); },
+      adViewed:    function(){ done(true); },
+      adDismissed: function(){ done(false); },
+      adBreakDone: function(info){
+        if (!settled) done(info && info.breakStatus === 'viewed');
+      }
+    });
+    // If the SDK never calls back (blocker, no fill), do not hang the game.
+    setTimeout(function(){ if (!settled) done(false); }, 12000);
   }
 
   let shellEl = null;
@@ -245,9 +247,9 @@ const Ads = (function(){
     shellEl.innerHTML =
       '<div class="modal-card">' +
         '<h2>' + esc(opts.title || 'Reward') + '</h2>' +
-        '<p class="sub">Watch a short ad to receive ' + esc(opts.reward || 'your reward') + '.</p>' +
+        '<p class="sub">A short ad is loading. You will receive ' + esc(opts.reward || 'your reward') + ' once it finishes.</p>' +
         '<div class="reward-box">' +
-          '<div class="ring">5</div>' +
+          '<div class="ring">\u25B6</div>' +
           '<div data-count>' + esc(statusText) + '</div>' +
         '</div>' +
         '<div class="modal-foot"><button class="btn ghost sm" data-skip>No thanks</button></div>' +
@@ -274,9 +276,8 @@ const Ads = (function(){
   return {
     init: init,
     showRewarded: showRewarded,
-    available: function(){
-      return (ADS.h5GamesAds && typeof window.adBreak === 'function') || ADS.simulateRewards;
-    },
+    available: function(){ return rewardKind() !== 'none'; },
+    rewardKind: rewardKind,
     resetConsent: function(){
       try { localStorage.removeItem(CONSENT_KEY); } catch (e) {}
       location.reload();

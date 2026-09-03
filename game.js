@@ -246,6 +246,7 @@ function renderPowers(){
   if (refill){
     const empty = powers.bomb + powers.wild + powers.undo === 0;
     refill.hidden = !(running && !over && empty && refills > 0 && Ads.available());
+    refill.textContent = Ads.rewardKind() === 'video' ? '\u25B6 Watch to refill' : 'Refill power-ups';
   }
 }
 function updateHud(){
@@ -623,7 +624,12 @@ function endGame(){
   $('over-title').textContent = reached2048 ? 'Nice run.' : 'Game Over';
   $('over-line').textContent =
     fmt(score) + ' points · ' + merges + ' merges · best chain ×' + chainBest;
-  $('btn-second').hidden = !(secondChances > 0 && Ads.available());
+  const sc = $('btn-second');
+  sc.hidden = !(secondChances > 0 && Ads.available());
+  // Only promise an ad when one will actually play.
+  sc.textContent = Ads.rewardKind() === 'video'
+    ? '\u25B6 Watch ad for a Second Chance'
+    : 'Use your Second Chance';
   $('overlay-over').hidden = false;
   blip(110, 0.45, 'sine');
 }
