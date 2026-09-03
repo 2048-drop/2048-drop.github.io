@@ -641,11 +641,17 @@ function endGame(){
 /* Second Chance: clear the top four rows so the player has room again.
    Granted for WATCHING a rewarded video — never for clicking anything. */
 function secondChance(){
+  const b = $('btn-second');
+  const lab = b.textContent;
+  b.disabled = true; b.textContent = 'Loading\u2026';
+  function restore(){ b.disabled = false; b.textContent = lab; }
   Ads.showRewarded({
     name: 'second-chance',
     title: 'Second Chance',
     reward: 'a cleared top section so you can keep this run going',
+    onSkip: function(){ restore(); toast('No ad available right now'); },
     onReward: function(){
+      restore();
       rewardedThisGame = true;
       secondChances--;
       const dead = [];
@@ -670,11 +676,17 @@ function secondChance(){
 }
 
 function refillPowers(){
+  const b = $('pw-refill');
+  const lab = b.textContent;
+  b.disabled = true; b.textContent = 'Loading\u2026';
+  function restore(){ b.disabled = false; b.textContent = lab; }
   Ads.showRewarded({
     name: 'power-refill',
     title: 'Power-up Refill',
     reward: 'one bomb, one wild block and one undo',
+    onSkip: function(){ restore(); toast('No ad available right now'); },
     onReward: function(){
+      restore();
       rewardedThisGame = true;
       refills--;
       grantPower('bomb'); grantPower('wild'); grantPower('undo');
